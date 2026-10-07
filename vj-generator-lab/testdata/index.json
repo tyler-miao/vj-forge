@@ -1,0 +1,98 @@
+[
+  {
+    "name": "case00",
+    "text": "A",
+    "font": "hei",
+    "size": 520,
+    "expectHoles": 1,
+    "note": "拉丁字母，1 个洞（三角孔）",
+    "width": 2048,
+    "height": 1024,
+    "textW": 260,
+    "textH": 362
+  },
+  {
+    "name": "case01",
+    "text": "口",
+    "font": "noto",
+    "size": 520,
+    "expectHoles": 1,
+    "note": "最简单的带洞汉字",
+    "width": 2048,
+    "height": 1024,
+    "textW": 520,
+    "textH": 396
+  },
+  {
+    "name": "case02",
+    "text": "回",
+    "font": "noto",
+    "size": 520,
+    "expectHoles": 2,
+    "note": "洞中洞，嵌套拓扑，最容易搞错",
+    "width": 2048,
+    "height": 1024,
+    "textW": 520,
+    "textH": 444
+  },
+  {
+    "name": "case03",
+    "text": "王",
+    "font": "noto",
+    "size": 520,
+    "expectHoles": 0,
+    "note": "无洞，纯外轮廓",
+    "width": 2048,
+    "height": 1024,
+    "textW": 520,
+    "textH": 407
+  },
+  {
+    "name": "case04",
+    "text": "舞",
+    "font": "hei",
+    "size": 520,
+    "expectHoles": 5,
+    "note": "复杂汉字，多笔画多洞",
+    "width": 2048,
+    "height": 1024,
+    "textW": 520,
+    "textH": 480
+  },
+  {
+    "name": "case05",
+    "text": "魔",
+    "font": "noto",
+    "size": 520,
+    "expectHoles": 4,
+    "note": "复杂汉字，笔画密集",
+    "width": 2048,
+    "height": 1024,
+    "textW": 520,
+    "textH": 472
+  },
+  {
+    "name": "case06",
+    "text": "ASIAN",
+    "font": "hei",
+    "size": 380,
+    "expectHoles": 3,
+    "note": "多字母组合，洞数=A(1)+A(1)+? ",
+    "width": 2048,
+    "height": 1024,
+    "textW": 950,
+    "textH": 265
+  },
+  {
+    "name": "case07",
+    "text": "SAKEE",
+    "font": "noto",
+    "size": 380,
+    "expectHoles": 0,
+    "note": "多字母，无洞",
+    "width": 2048,
+    "height": 1024,
+    "textW": 1093,
+    "textH": 285
+  }
+]
