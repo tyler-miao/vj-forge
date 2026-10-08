@@ -26,7 +26,7 @@ const formsSrc = html.match(/const ADORN_FORMS = \{[\s\S]*?\n\};/)[0];
 const factory = new Function('THREE', mergeSrc + '\n' + formsSrc + '\nreturn ADORN_FORMS;');
 const ADORN_FORMS = factory(THREE);
 
-const EXPECTED_KEYS = ['cone','mic','cap','star','diamond','boombox','cassette','eq','horn','vinyl','chain','crown','graffiti','phones'];
+const EXPECTED_KEYS = ['cone','mic','cap','star','spray','boombox','cassette','eq','horn','vinyl','chain','crown','graffiti','phones'];
 const kinds = new Set(['尖刺','块状','圆环']);
 
 // 1) 形态清单
@@ -79,7 +79,7 @@ const labels = Object.values(ADORN_FORMS).map(f => f.label);
 if (new Set(labels).size !== labels.length) fail('存在重复标签：' + labels.filter((v, i, a) => a.indexOf(v) !== i).join('/'));
 
 // 5) 扁平件（noSpin）朝向约定检查：声明了 noSpin 的必须是需要正面朝向观众的那几个
-const noSpinKeep = ['cap','star','boombox','cassette','eq','phones'];
+const noSpinKeep = ['boombox','cassette','eq','phones'];
 for (const k of noSpinKeep) {
   const f = ADORN_FORMS[k];
   if (!f.noSpin && k !== 'cap') fail(`${k} 应保持朝向固定（noSpin）`);

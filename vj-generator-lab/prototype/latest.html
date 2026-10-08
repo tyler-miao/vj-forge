@@ -305,6 +305,7 @@
         </div>
         <div class="field">
           <label>边缘装饰</label>
+          <div class="switch"><span>显示装饰</span><button id="swAdorn" class="on"></button></div>
           <div class="chips" id="chipsForm"></div>
         </div>
         <div class="field">
@@ -1003,7 +1004,7 @@ const BACKDROPS = {
      圆环类 —— 饰品系（黑胶唱片 / 金链 / 皇冠 / 涂鸦漆滴 / 耳机）
    整套按 hip-hop 街头元素重做：麦克风／黑胶／金链／皇冠／喷漆…… 都是
    老派说唱里真正会挂在字面边缘的东西，只有「尖锥」保持原来不动。
-   noSpin: 生成实例时不做随机自转（均衡器/五角星/鸭舌帽等扁平件要整齐朝向观众） */
+   noSpin: 生成实例时不做随机自转（均衡器/五角星/耳机等扁平件要整齐朝向观众） */
 function mergeGeos(geos){
   // 把多个带索引几何体拼成一份，各子几何体内部索引原样保留 ——
   // 这样 normalizeUnitHeight 重算法线时仍是平滑的，不会退化成棱面。
@@ -1040,27 +1041,22 @@ const ADORN_FORMS = {
   mic:    { label:'麦克风',   kind:'尖刺', make: () => {
             // 老式说唱话筒：细手柄 + 大球形拾音头，头重脚轻才像"吼麦"
             const prof = [
-              [0.045, 0.00], [0.052, 0.20], [0.056, 0.34],
-              [0.052, 0.44],
-              [0.082, 0.52], [0.134, 0.62], [0.154, 0.72],
-              [0.158, 0.80], [0.130, 0.90], [0.078, 0.97], [0.000, 1.00]
+              [0.042, 0.00], [0.050, 0.20], [0.054, 0.34],
+              [0.050, 0.44],
+              [0.088, 0.52], [0.148, 0.62], [0.172, 0.72],
+              [0.176, 0.80], [0.142, 0.90], [0.086, 0.97], [0.000, 1.00]
             ];
             const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
             return new THREE.LatheGeometry(pts, 20);
           } },
-  cap:    { label:'鸭舌帽',   kind:'尖刺', noSpin:true, make: () => {
-            // 帽子侧面剪影：帽顶朝外、帽檐在底部侧面平伸
-            const s = new THREE.Shape();
-            s.moveTo(0.00, 0.20);
-            s.quadraticCurveTo(0.04, 0.42, 0.15, 0.42);
-            s.quadraticCurveTo(0.25, 0.42, 0.28, 0.24);
-            s.lineTo(0.28, 0.06);
-            s.lineTo(0.56, 0.06);
-            s.lineTo(0.56, 0.20);
-            s.closePath();
-            const g = new THREE.ExtrudeGeometry(s, { depth: 0.10, bevelEnabled:false, curveSegments:2 });
-            g.translate(-0.28, -0.20, -0.05);              // 轮廓居中、帽檐朝 +Y（生长方向）
-            return g;
+  cap:    { label:'鸭舌帽',   kind:'尖刺', make: () => {
+            // 立体棒球帽：半球帽冠 + 底部帽檐盘，任意角度看都认得出
+            const dome = new THREE.SphereGeometry(0.19, 20, 12, 0, Math.PI*2, 0, Math.PI/2);
+            dome.translate(0, 0.30, 0);
+            const brim = new THREE.TorusGeometry(0.19, 0.06, 8, 20);
+            brim.rotateX(Math.PI/2);
+            brim.translate(0, 0.09, 0);
+            return mergeGeos([brim, dome]);
           } },
   star:   { label:'五角星',   kind:'尖刺', noSpin:true, make: () => {
             // 说唱歌手链坠上那种五角星，压扁、正面朝外
@@ -1072,20 +1068,29 @@ const ADORN_FORMS = {
               i === 0 ? s.moveTo(x, y) : s.lineTo(x, y);
             }
             s.closePath();
-            return new THREE.ExtrudeGeometry(s, { depth: 0.07, bevelEnabled:false, curveSegments:1 });
+            return new THREE.ExtrudeGeometry(s, { depth: 0.20, bevelEnabled:false, curveSegments:1 });
           } },
-  diamond:{ label:'钻石',     kind:'尖刺', make: () => new THREE.OctahedronGeometry(0.115, 0) },
+  spray:  { label:'喷漆罐',   kind:'块状', make: () => {
+            // 涂鸦喷漆罐：罐身 + 收肩 + 顶上喷嘴，街头符号感最强
+            const prof = [
+              [0.000, 0.00], [0.125, 0.03], [0.130, 0.30], [0.126, 0.50],
+              [0.080, 0.58], [0.075, 0.70], [0.075, 0.78],
+              [0.048, 0.82], [0.044, 0.88], [0.000, 0.88]
+            ];
+            const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
+            return new THREE.LatheGeometry(pts, 20);
+          } },
 
   boombox:{ label:'大音响',   kind:'块状', noSpin:true, make: () => {
             // 手提收录机：机身 + 两个外露的喇叭，正面朝向观众
-            const body = new THREE.BoxGeometry(0.17, 0.52, 0.11);
-            body.translate(0, 0.24, 0);
+            const body = new THREE.BoxGeometry(0.22, 0.55, 0.12);
+            body.translate(0, 0.26, 0);
             const mkSpk = (y) => {
-              const c = new THREE.CylinderGeometry(0.048, 0.048, 0.06, 20);
-              c.translate(0, y, 0.075);
+              const c = new THREE.CylinderGeometry(0.060, 0.060, 0.07, 20);
+              c.translate(0, y, 0.085);
               return c;
             };
-            return mergeGeos([body, mkSpk(0.42), mkSpk(0.06)]);
+            return mergeGeos([body, mkSpk(0.44), mkSpk(0.06)]);
           } },
   cassette:{label:'磁带',    kind:'块状', noSpin:true, make: () => {
             // 磁带：扁方盒 + 两个卷轴孔 + 中间标签窗，正面朝向观众
@@ -1103,8 +1108,8 @@ const ADORN_FORMS = {
   eq:     { label:'均衡器',   kind:'块状', noSpin:true, make: () => {
             // 频谱推子：几根高矮不一的细柱并排，正面朝向观众
             const bars = [0.62, 1.00, 0.78, 0.92, 0.54].map((h, i) => {
-              const b = new THREE.BoxGeometry(0.042, h, 0.055);
-              b.translate((i - 2) * 0.056, h/2, 0);
+              const b = new THREE.BoxGeometry(0.055, h, 0.13);
+              b.translate((i - 2) * 0.072, h/2, 0);
               return b;
             });
             return mergeGeos(bars);
@@ -1112,8 +1117,8 @@ const ADORN_FORMS = {
   horn:   { label:'号角喇叭', kind:'块状', make: () => {
             // 老收录机喇叭的号角口：细喉部向外炸开成敞口
             const prof = [
-              [0.000, 0.00], [0.056, 0.08], [0.066, 0.26], [0.072, 0.48],
-              [0.098, 0.66], [0.150, 0.82], [0.180, 0.92], [0.185, 1.00]
+              [0.000, 0.00], [0.056, 0.08], [0.066, 0.26], [0.074, 0.48],
+              [0.104, 0.66], [0.155, 0.82], [0.185, 0.92], [0.190, 1.00]
             ];
             const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
             return new THREE.LatheGeometry(pts, 18);
@@ -1121,55 +1126,56 @@ const ADORN_FORMS = {
 
   vinyl:  { label:'黑胶唱片', kind:'圆环', make: () => {
             // 黑胶：唱盘（粗环）+ 中心标签，环平面垂直于生长轴
-            const disc = new THREE.TorusGeometry(0.085, 0.030, 10, 28);
+            const disc = new THREE.TorusGeometry(0.095, 0.034, 10, 28);
             disc.rotateX(Math.PI/2);
-            const label = new THREE.CylinderGeometry(0.038, 0.038, 0.080, 18);
+            const label = new THREE.CylinderGeometry(0.050, 0.050, 0.090, 18);
             return mergeGeos([disc, label]);
           } },
   chain:  { label:'金链',     kind:'圆环', make: () => {
             // 两节十字交错的链环，像金链子的一截
-            const a = new THREE.TorusGeometry(0.070, 0.020, 8, 18);
+            const a = new THREE.TorusGeometry(0.075, 0.035, 8, 18);
             a.rotateX(Math.PI/2);
-            const b = new THREE.TorusGeometry(0.070, 0.020, 8, 18);
+            const b = new THREE.TorusGeometry(0.075, 0.035, 8, 18);
             b.rotateY(Math.PI/2);
             return mergeGeos([a, b]);
           } },
   crown:  { label:'皇冠',     kind:'圆环', make: () => {
             // 说唱里的"王者"冠冕：底环 + 三根尖锥
-            const band = new THREE.CylinderGeometry(0.088, 0.091, 0.14, 14);
-            band.translate(0, 0.07, 0);
+            const band = new THREE.CylinderGeometry(0.120, 0.124, 0.16, 14);
+            band.translate(0, 0.08, 0);
             const mk = (x, h) => {
-              const c = new THREE.ConeGeometry(0.045, h, 8);
-              c.translate(x, 0.14 + h/2, 0);
+              const c = new THREE.ConeGeometry(0.060, h, 8);
+              c.translate(x, 0.16 + h/2, 0);
               return c;
             };
-            return mergeGeos([band, mk(0, 0.20), mk(-0.055, 0.14), mk(0.055, 0.14)]);
+            return mergeGeos([band, mk(0, 0.26), mk(-0.075, 0.18), mk(0.075, 0.18)]);
           } },
   graffiti:{label:'涂鸦漆滴', kind:'圆环', make: () => {
             // 喷漆没干就从边缘垂下来的漆滴，往一侧歪、带点 S 形
             const pts = [];
             for (let i = 0; i <= 16; i++){
               const t = i/16;
-              const r = Math.sin(Math.pow(t, 0.62) * Math.PI) * 0.112 * (1 - 0.60*t) + 0.006;
+              const r = Math.sin(Math.pow(t, 0.62) * Math.PI) * 0.150 * (1 - 0.60*t) + 0.008;
               pts.push(new THREE.Vector2(r, t));
             }
             const g = new THREE.LatheGeometry(pts, 16);
             const p = g.attributes.position;
             for (let i = 0; i < p.count; i++){
               const y = p.getY(i);
-              p.setX(i, p.getX(i) + Math.sin(y * 4.0) * 0.050 * y);
+              p.setX(i, p.getX(i) + Math.sin(y * 4.0) * 0.070 * y);
             }
             return g;
           } },
   phones: { label:'耳机',     kind:'圆环', noSpin:true, make: () => {
-            // DJ 头戴耳机：头梁（环）+ 两个耳罩（扁圆柱），正面朝向观众
-            const band = new THREE.TorusGeometry(0.072, 0.014, 8, 22);
+            // DJ 头戴耳机：加粗头梁 + 厚耳罩（耳罩面朝观众），立体不显薄
+            const band = new THREE.TorusGeometry(0.075, 0.030, 8, 22);
             const mk = (x) => {
-              const c = new THREE.CylinderGeometry(0.030, 0.032, 0.022, 16);
-              c.translate(x, -0.052, 0);
+              const c = new THREE.CylinderGeometry(0.048, 0.050, 0.060, 18);
+              c.rotateX(Math.PI/2);
+              c.translate(x, -0.030, 0);
               return c;
             };
-            return mergeGeos([band, mk(-0.056), mk(0.056)]);
+            return mergeGeos([band, mk(-0.062), mk(0.062)]);
           } }
 };
 
@@ -1271,7 +1277,9 @@ function buildAdornments(geo, material, opts){
       });
 
   const g = EDGE.normalizeUnitHeight(form.make());
-  const mesh = new THREE.InstancedMesh(g, material, layout.length);
+  // 装饰单独用双面材质：任何朝向、任何 3D 视角都不被背面剔除吃掉
+  const mat = material.clone(); mat.side = THREE.DoubleSide;
+  const mesh = new THREE.InstancedMesh(g, mat, layout.length);
   mesh.frustumCulled = false;
   const m = new THREE.Matrix4(), q = new THREE.Quaternion();
   const spin = new THREE.Quaternion(), tiltQ = new THREE.Quaternion();
@@ -1378,6 +1386,7 @@ let loopSpin = false, objSway = true;
 
 const style = { dilate:0.030, spike:1.20, shear:0.14, arch:0.08, round:0.000, rough:0.000, persp:0.10, seed:1337 };
 const adorn = { form:'cone', pattern:'fan', sides:'both', base:0.34, jitter:0.35, lean:0.55, spacing:0.13, seed:20261007 };
+let adornOn = true;
 // 缠绕：turns 必须整数圈，路径才能闭合
 const strand = { kind:'none', turns:8, radius:0.030, amp:0.030, depth:0.055, leaves:true, seed:99 };
 
@@ -1447,6 +1456,7 @@ function applyDensity(){
 function rebuildSpikes(){
   if (!lastGeo || !current.face) return;
   if (spikeMesh){ group.remove(spikeMesh); spikeMesh.geometry.dispose(); spikeMesh.dispose(); spikeMesh = null; }
+  if (!adornOn) return;
   spikeMesh = buildAdornments(lastGeo, current.face,
     { count: lastCount, outline: lastOutline, ...adorn });
   group.add(spikeMesh);
@@ -1811,6 +1821,8 @@ wireSwitch('swSpin', false, on => {
   loopSpin = on; controls.autoRotate = on; controls.autoRotateSpeed = 0.8;
   const b = document.getElementById('btnSpin'); if (b) b.classList.toggle('on', on);
 });
+// 边缘装饰总开关：关掉时不再重建装饰网格
+wireSwitch('swAdorn', true, on => { adornOn = on; rebuildSpikes(); });
 // 背景层总开关：程序化背景和图片背景共用它
 wireSwitch('swBg', true, on => { bgLayerOn = on; applyBgVisibility(); });
 // 辉光开关（等价于把强度拉到 0，但一键更快）
