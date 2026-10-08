@@ -1,0 +1,452 @@
+[
+  {
+    "name": "bungee",
+    "bucket": "ofl",
+    "note": "Bungee 城市招牌",
+    "files": [
+      {
+        "name": "Bungee-Regular.ttf",
+        "size": 118996,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bungee/Bungee-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "bungeeshade",
+    "bucket": "ofl",
+    "note": "Bungee Shade 层叠阴影",
+    "files": [
+      {
+        "name": "BungeeShade-Regular.ttf",
+        "size": 304936,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bungeeshade/BungeeShade-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "bungeeinline",
+    "bucket": "ofl",
+    "note": "Bungee Inline 内嵌线",
+    "files": [
+      {
+        "name": "BungeeInline-Regular.ttf",
+        "size": 152376,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bungeeinline/BungeeInline-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "bungeespice",
+    "bucket": "ofl",
+    "note": "Bungee Spice 彩色渐变",
+    "files": [
+      {
+        "name": "BungeeSpice-Regular.ttf",
+        "size": 1502376,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bungeespice/BungeeSpice-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "permanentmarker",
+    "bucket": "apache",
+    "note": "Permanent Marker 马克笔涂鸦",
+    "files": [
+      {
+        "name": "PermanentMarker-Regular.ttf",
+        "size": 74632,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/apache/permanentmarker/PermanentMarker-Regular.ttf"
+      }
+    ],
+    "license": [
+      "LICENSE.txt"
+    ]
+  },
+  {
+    "name": "anton",
+    "bucket": "ofl",
+    "note": "Anton 重磅窄体",
+    "files": [
+      {
+        "name": "Anton-Regular.ttf",
+        "size": 170812,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/anton/Anton-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "archivoblack",
+    "bucket": "ofl",
+    "note": "Archivo Black 重磅",
+    "files": [
+      {
+        "name": "ArchivoBlack-Regular.ttf",
+        "size": 90988,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/archivoblack/ArchivoBlack-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikbeastly",
+    "bucket": "ofl",
+    "note": "Rubik Beastly 锯齿扭曲",
+    "files": [
+      {
+        "name": "RubikBeastly-Regular.ttf",
+        "size": 512684,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikbeastly/RubikBeastly-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikburned",
+    "bucket": "ofl",
+    "note": "Rubik Burned 烧灼",
+    "files": [
+      {
+        "name": "RubikBurned-Regular.ttf",
+        "size": 605348,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikburned/RubikBurned-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikglitch",
+    "bucket": "ofl",
+    "note": "Rubik Glitch 故障",
+    "files": [
+      {
+        "name": "RubikGlitch-Regular.ttf",
+        "size": 407304,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikglitch/RubikGlitch-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikpuddles",
+    "bucket": "ofl",
+    "note": "Rubik Puddles 液态",
+    "files": [
+      {
+        "name": "RubikPuddles-Regular.ttf",
+        "size": 404956,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikpuddles/RubikPuddles-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikiso",
+    "bucket": "ofl",
+    "note": "Rubik Iso 等高线",
+    "files": [
+      {
+        "name": "RubikIso-Regular.ttf",
+        "size": 132376,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikiso/RubikIso-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "rubikmoonrocks",
+    "bucket": "ofl",
+    "note": "Rubik Moonrocks 陨石",
+    "files": [
+      {
+        "name": "RubikMoonrocks-Regular.ttf",
+        "size": 403712,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/rubikmoonrocks/RubikMoonrocks-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "tiltneon",
+    "bucket": "ofl",
+    "note": "Tilt Neon 霓虹管",
+    "files": [
+      {
+        "name": "TiltNeon[XROT,YROT].ttf",
+        "size": 583288,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/tiltneon/TiltNeon%5BXROT%2CYROT%5D.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "tiltprism",
+    "bucket": "ofl",
+    "note": "Tilt Prism 棱镜",
+    "files": [
+      {
+        "name": "TiltPrism[XROT,YROT].ttf",
+        "size": 1049672,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/tiltprism/TiltPrism%5BXROT%2CYROT%5D.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "tiltwarp",
+    "bucket": "ofl",
+    "note": "Tilt Warp 扭曲",
+    "files": [
+      {
+        "name": "TiltWarp[XROT,YROT].ttf",
+        "size": 256812,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/tiltwarp/TiltWarp%5BXROT%2CYROT%5D.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "monoton",
+    "bucket": "ofl",
+    "note": "Monoton 复古平行线",
+    "files": [
+      {
+        "name": "Monoton-Regular.ttf",
+        "size": 51604,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/monoton/Monoton-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "nabla",
+    "bucket": "ofl",
+    "note": "Nabla 立体彩色",
+    "files": [
+      {
+        "name": "Nabla[EDPT,EHLT].ttf",
+        "size": 1643616,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/nabla/Nabla%5BEDPT%2CEHLT%5D.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "bangers",
+    "bucket": "ofl",
+    "note": "Bangers 漫画冲击",
+    "files": [
+      {
+        "name": "Bangers-Regular.ttf",
+        "size": 93148,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bangers/Bangers-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "fasterone",
+    "bucket": "ofl",
+    "note": "Faster One 速度线",
+    "files": [
+      {
+        "name": "FasterOne-Regular.ttf",
+        "size": 94044,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/fasterone/FasterOne-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "blackopsone",
+    "bucket": "ofl",
+    "note": "Black Ops One 军事模板",
+    "files": [
+      {
+        "name": "BlackOpsOne-Regular.ttf",
+        "size": 166532,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/blackopsone/BlackOpsOne-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "russoone",
+    "bucket": "ofl",
+    "note": "Russo One 科技",
+    "files": [
+      {
+        "name": "RussoOne-Regular.ttf",
+        "size": 39124,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/russoone/RussoOne-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "metalmania",
+    "bucket": "ofl",
+    "note": "Metal Mania 金属乐队",
+    "files": [
+      {
+        "name": "MetalMania-Regular.ttf",
+        "size": 254568,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/metalmania/MetalMania-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "bungeeoutline",
+    "bucket": "ofl",
+    "note": "Bungee Outline 空心",
+    "files": [
+      {
+        "name": "BungeeOutline-Regular.ttf",
+        "size": 202152,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bungeeoutline/BungeeOutline-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "zcoolqingkehuangyou",
+    "bucket": "ofl",
+    "note": "站酷庆科黄油体",
+    "files": [
+      {
+        "name": "ZCOOLQingKeHuangYou-Regular.ttf",
+        "size": 8328684,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/ZCOOLQingKeHuangYou-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "zcoolkuaile",
+    "bucket": "ofl",
+    "note": "站酷快乐体",
+    "files": [
+      {
+        "name": "ZCOOLKuaiLe-Regular.ttf",
+        "size": 1514968,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/ZCOOLKuaiLe-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "zcoolxiaowei",
+    "bucket": "ofl",
+    "note": "站酷小薇体",
+    "files": [
+      {
+        "name": "ZCOOLXiaoWei-Regular.ttf",
+        "size": 6313808,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolxiaowei/ZCOOLXiaoWei-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "mashanzheng",
+    "bucket": "ofl",
+    "note": "马善政毛笔楷书",
+    "files": [
+      {
+        "name": "MaShanZheng-Regular.ttf",
+        "size": 5857936,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "zhimangxing",
+    "bucket": "ofl",
+    "note": "志莽行书",
+    "files": [
+      {
+        "name": "ZhiMangXing-Regular.ttf",
+        "size": 4063532,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/zhimangxing/ZhiMangXing-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  },
+  {
+    "name": "longcang",
+    "bucket": "ofl",
+    "note": "龙藏体",
+    "files": [
+      {
+        "name": "LongCang-Regular.ttf",
+        "size": 5162508,
+        "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/longcang/LongCang-Regular.ttf"
+      }
+    ],
+    "license": [
+      "OFL.txt"
+    ]
+  }
+]

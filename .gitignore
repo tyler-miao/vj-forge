@@ -3,3 +3,8 @@
 .superpowers/
 dist/
 *.log
+
+# 字体二进制由 fetch-fonts.mjs 重新下载，不入库
+*.ttf
+*.otf
+
