@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D VJ 生成器 · 街头字体库</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    display:flex;flex-direction:column;overflow:hidden;
+    background:#f4f5f7;color:#1b1d22;
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:13px;-webkit-font-smoothing:antialiased;
+  }
+  /* ---------- 顶栏 ---------- */
+  header{
+    flex-shrink:0;display:flex;align-items:baseline;gap:10px;
+    padding:13px 20px;background:#fff;border-bottom:1px solid #e6e8ec;
+  }
+  header h1{font-size:15px;font-weight:600;letter-spacing:.01em}
+  header .sub{font-size:11.5px;color:#8b909a}
+  header .grow{flex:1}
+  .pill{font-size:10.5px;color:#0a7d3c;background:#e7f7ee;border-radius:20px;padding:3px 10px}
+
+  /* ---------- 主区 ---------- */
+  main{flex:1;display:flex;gap:14px;padding:14px;min-height:0}
+  .left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+  .stage-outer{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+  .stage-wrap{
+    position:relative;aspect-ratio:16/9;max-width:100%;max-height:100%;
+    width:100%;background:#0a0a0e;border-radius:14px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,20,30,.06),0 8px 24px rgba(16,20,30,.10);
+  }
+  .stage-wrap canvas{display:block;width:100%;height:100%}
+  .stage-tools{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:3}
+  .stage-tools button{
+    background:rgba(18,18,24,.62);color:#e9e9ef;border:1px solid rgba(255,255,255,.16);
+    border-radius:8px;padding:5px 10px;font-size:11.5px;cursor:pointer;font-family:inherit;
+    backdrop-filter:blur(8px);transition:all .14s;
+  }
+  .stage-tools button:hover{background:rgba(40,40,52,.8);color:#fff}
+  .stage-tools button.on{background:#1100ff;border-color:#1100ff;color:#fff}
+  .stage-hint{
+    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;
+    color:#9a9aa6;font-size:11.5px;background:rgba(14,14,20,.55);
+    padding:5px 13px;border-radius:20px;border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;backdrop-filter:blur(8px);transition:opacity .7s;
+  }
+  .rec-dot{
+    position:absolute;left:12px;top:12px;z-index:3;display:none;align-items:center;gap:7px;
+    background:rgba(120,10,20,.8);color:#fff;font-size:11.5px;padding:5px 12px;border-radius:20px;
+    backdrop-filter:blur(8px);
+  }
+  .rec-dot.on{display:flex}
+  .rec-dot i{width:8px;height:8px;border-radius:50%;background:#ff3b47;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* ---------- 导出条 ---------- */
+  .exportbar{
+    flex-shrink:0;display:flex;align-items:center;gap:20px;
+    background:#fff;border:1px solid #e6e8ec;border-radius:12px;padding:12px 16px;
+  }
+  button.primary{
+    background:#1100ff;color:#fff;border:none;border-radius:9px;
+    padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:all .14s;white-space:nowrap;
+  }
+  button.primary:hover{background:#0d00d0}
+  button.primary:disabled{background:#c3c6cf;cursor:default}
+  .param{display:flex;flex-direction:column;gap:4px;min-width:120px}
+  .param .k{display:flex;justify-content:space-between;font-size:11px;color:#8b909a}
+  .param .k b{color:#1100ff;font-weight:600}
+  .grow{flex:1}
+  #diag{font-size:10.5px;color:#9aa0aa;line-height:1.6;text-align:right;font-variant-numeric:tabular-nums}
+  #diag b{color:#4a5568}
+
+  /* ---------- 右侧面板 ---------- */
+  aside{
+    width:344px;flex-shrink:0;background:#fff;border:1px solid #e6e8ec;border-radius:14px;
+    display:flex;flex-direction:column;min-height:0;overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,20,30,.04);
+  }
+  .tabs{display:flex;flex-shrink:0;border-bottom:1px solid #e6e8ec}
+  .tabs button{
+    flex:1;padding:13px 0;font-size:13px;color:#7a8090;background:none;border:none;
+    border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;transition:all .14s;
+  }
+  .tabs button:hover{color:#1b1d22}
+  .tabs button.on{color:#1100ff;border-bottom-color:#1100ff;font-weight:600}
+  .panes{flex:1;overflow-y:auto;min-height:0}
+  .panes::-webkit-scrollbar{width:8px}
+  .panes::-webkit-scrollbar-thumb{background:#dcdfe5;border-radius:4px}
+  .pane{display:none;padding:16px 16px 24px}
+  .pane.on{display:block}
+
+  .field{margin-bottom:16px}
+  .field > label{display:block;font-size:12px;color:#5b6270;margin-bottom:7px;font-weight:500}
+  .field .note{font-size:11px;color:#9aa0aa;line-height:1.55;margin-top:6px}
+  input[type=text],textarea,select{
+    width:100%;background:#f7f8fa;border:1px solid #e2e4ea;border-radius:9px;
+    padding:9px 11px;font-size:13px;font-family:inherit;color:#1b1d22;outline:none;transition:all .14s;
+  }
+  textarea{resize:none;font-weight:600;letter-spacing:.03em}
+  input[type=text]:focus,textarea:focus,select:focus{border-color:#1100ff;background:#fff}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+  .seg{display:flex;background:#f2f3f6;border-radius:9px;padding:3px;gap:3px}
+  .seg button{
+    flex:1;padding:7px 0;font-size:12px;color:#6b7280;background:none;border:none;
+    border-radius:7px;cursor:pointer;font-family:inherit;transition:all .14s;
+  }
+  .seg button.on{background:#fff;color:#1100ff;font-weight:600;box-shadow:0 1px 3px rgba(16,20,30,.10)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{
+    padding:6px 12px;font-size:12px;color:#5b6270;background:#f2f3f6;border:1px solid transparent;
+    border-radius:20px;cursor:pointer;font-family:inherit;transition:all .14s;
+  }
+  .chips button:hover{background:#e8eaf0;color:#1b1d22}
+  .chips button.on{background:#eef0ff;color:#1100ff;border-color:#1100ff;font-weight:600}
+
+  .slider{margin-bottom:13px}
+  .slider .k{display:flex;justify-content:space-between;font-size:11.5px;color:#7a8090;margin-bottom:5px}
+  .slider .k b{color:#1100ff;font-weight:600;font-variant-numeric:tabular-nums}
+  input[type=range]{
+    width:100%;height:4px;-webkit-appearance:none;appearance:none;
+    background:#e2e4ea;border-radius:2px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:#fff;border:2px solid #1100ff;cursor:pointer;
+    box-shadow:0 1px 4px rgba(17,0,255,.3);transition:transform .12s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+
+  details.adv{border-top:1px solid #eef0f3;padding-top:13px;margin-top:4px}
+  details.adv summary{
+    font-size:12px;color:#5b6270;cursor:pointer;list-style:none;
+    display:flex;justify-content:space-between;align-items:center;font-weight:500;
+  }
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::after{content:'展开';font-size:11px;color:#9aa0aa;font-weight:400}
+  details.adv[open] summary::after{content:'收起'}
+  details.adv > div{margin-top:13px}
+
+  .swatch{display:flex;align-items:center;gap:9px}
+  .swatch input[type=color]{
+    width:44px;height:32px;border:1px solid #e2e4ea;border-radius:8px;
+    background:none;cursor:pointer;padding:2px;
+  }
+  .swatch input[type=text]{flex:1;font-family:ui-monospace,Consolas,monospace;text-transform:uppercase}
+
+  /* ---------- 开关 ---------- */
+  .switch{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+  .switch span{font-size:12px;color:#5b6270}
+  .switch button{
+    width:42px;height:23px;border-radius:12px;background:#dfe2e8;border:none;
+    position:relative;cursor:pointer;transition:background .16s;flex-shrink:0;
+  }
+  .switch button::after{
+    content:'';position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(16,20,30,.28);transition:transform .16s;
+  }
+  .switch button.on{background:#1100ff}
+  .switch button.on::after{transform:translateX(19px)}
+
+  /* ---------- 选图按钮 ---------- */
+  .pickbtn{
+    width:100%;background:#f2f3f6;border:1px dashed #c9cdd6;border-radius:9px;
+    padding:11px 0;font-size:12.5px;color:#5b6270;cursor:pointer;font-family:inherit;
+    transition:all .14s;
+  }
+  .pickbtn:hover{border-color:#1100ff;color:#1100ff;background:#eef0ff}
+  .stage-wrap.dropping{outline:2px dashed #1100ff;outline-offset:-8px}
+
+  #err{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:none;
+    background:#fff0f1;border:1px solid #ffc9cd;border-radius:10px;padding:12px 16px;
+    color:#8a1220;font-size:12px;line-height:1.55;max-width:640px;
+    box-shadow:0 6px 20px rgba(16,20,30,.12);
+  }
+  #err b{color:#5a0812}
+  #loading{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:#f4f5f7;color:#8b909a;font-size:13px;z-index:40;letter-spacing:.06em;
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loading">加载中…</div>
+
+<header>
+  <h1>3D VJ 生成器</h1>
+  <span class="sub">24 款开源街头字体 → 镶钻立体字 → 现场投屏 / 无缝循环视频</span>
+  <span class="grow"></span>
+  <span class="pill">离线可用</span>
+</header>
+
+<main>
+  <div class="left">
+    <div class="stage-outer">
+      <div class="stage-wrap" id="stageWrap">
+        <div class="stage-tools">
+          <button id="btnReset">重置视角</button>
+          <button id="btnSpin">相机自转</button>
+          <button id="btnFull">全屏</button>
+        </div>
+        <div class="rec-dot" id="recDot"><i></i><span id="recTxt">录制中</span></div>
+        <div class="stage-hint" id="hint">拖动旋转 · 滚轮缩放 · 右键平移 · 双击重置</div>
+      </div>
+    </div>
+
+    <div class="exportbar">
+      <button class="primary" id="btnExport">● 导出循环视频</button>
+      <div class="param">
+        <span class="k"><span>时长</span><b id="lbDur">8.0s</b></span>
+        <input type="range" id="dur" min="2" max="16" step="0.5" value="8">
+      </div>
+      <div class="param">
+        <span class="k"><span>帧率</span><b id="lbFps">30</b></span>
+        <input type="range" id="fps" min="24" max="60" step="6" value="30">
+      </div>
+      <div class="param">
+        <span class="k"><span>码率</span><b id="lbBr">8 Mbps</b></span>
+        <input type="range" id="br" min="2" max="24" step="1" value="8">
+      </div>
+      <span class="grow"></span>
+      <div id="diag">—</div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="tabs">
+      <button data-tab="text" class="on">文本</button>
+      <button data-tab="look">外观</button>
+      <button data-tab="bg">背景</button>
+    </div>
+    <div class="panes">
+
+      <!-- ============ 文本 ============ -->
+      <div class="pane on" data-pane="text">
+        <div class="field">
+          <label>名字</label>
+          <textarea id="txt" rows="1" spellcheck="false">刺头舞蹈</textarea>
+          <div class="note">中英文都可以。字体直接用系统里的，不需要下载。</div>
+        </div>
+        <div class="field">
+          <label>字体</label>
+          <select id="font"></select>
+          <div class="note" id="fontNote">24 款内置字体全部是开源协议（OFL / Apache），免费商用可再分发。</div>
+        </div>
+        <div class="field">
+          <label>字体粗细</label>
+          <div class="seg" id="segWeight">
+            <button data-v="400">常规</button>
+            <button data-v="700" class="on">粗</button>
+            <button data-v="900">最粗</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>气质</label>
+          <div class="chips" id="chipsStyle"></div>
+          <div class="note">一键设好下面七个字形参数。</div>
+        </div>
+
+        <details class="adv">
+          <summary>字形微调</summary>
+          <div>
+            <div class="slider"><span class="k"><span>加粗</span><b id="vg1">0.030</b></span><input type="range" id="g1" min="-0.040" max="0.080" step="0.001" value="0.030"></div>
+            <div class="slider"><span class="k"><span>尖角（变凶）</span><b id="vg2">1.20</b></span><input type="range" id="g2" min="0" max="2" step="0.01" value="1.2"></div>
+            <div class="slider"><span class="k"><span>圆角</span><b id="vg5">0.000</b></span><input type="range" id="g5" min="0" max="0.060" step="0.001" value="0"></div>
+            <div class="slider"><span class="k"><span>毛边（手凿感）</span><b id="vg6">0.000</b></span><input type="range" id="g6" min="0" max="0.012" step="0.0005" value="0"></div>
+            <div class="slider"><span class="k"><span>斜切</span><b id="vg3">0.14</b></span><input type="range" id="g3" min="-0.40" max="0.40" step="0.01" value="0.14"></div>
+            <div class="slider"><span class="k"><span>拱形</span><b id="vg4">0.08</b></span><input type="range" id="g4" min="-0.25" max="0.30" step="0.01" value="0.08"></div>
+            <div class="slider"><span class="k"><span>透视</span><b id="vg7">0.10</b></span><input type="range" id="g7" min="-0.60" max="0.60" step="0.01" value="0.10"></div>
+          </div>
+        </details>
+      </div>
+
+      <!-- ============ 外观 ============ -->
+      <div class="pane" data-pane="look">
+        <div class="field">
+          <label>材质</label>
+          <div class="chips" id="chipsMat"></div>
+        </div>
+        <div class="field">
+          <label>立体感</label>
+          <div class="slider"><span class="k"><span>挤出厚度</span><b id="v5">0.22</b></span><input type="range" id="s5" min="0.04" max="0.60" step="0.01" value="0.22"></div>
+          <div class="slider"><span class="k"><span>边缘高光</span><b id="v6">0.022</b></span><input type="range" id="s6" min="0.002" max="0.060" step="0.001" value="0.022"></div>
+          <div class="slider"><span class="k"><span>表面粗糙</span><b id="v2">0.16</b></span><input type="range" id="s2" min="0.02" max="0.6" step="0.01" value="0.16"></div>
+        </div>
+        <div class="field">
+          <label>镶钻</label>
+          <div class="slider"><span class="k"><span>钻密度（每字高几颗）</span><b id="v1">22</b></span><input type="range" id="s1" min="5" max="60" step="1" value="22"></div>
+          <div class="note">钻石材质生效时才有作用。</div>
+        </div>
+        <div class="field">
+          <label>边缘装饰</label>
+          <div class="chips" id="chipsForm"></div>
+        </div>
+        <div class="field">
+          <div class="row2">
+            <select id="pattern">
+              <option value="fan">扇形弧</option>
+              <option value="zigzag">锯齿</option>
+              <option value="ramp">递增</option>
+              <option value="wave">波浪</option>
+              <option value="random">乱序</option>
+            </select>
+            <select id="sides">
+              <option value="both">上下都有</option>`n            <option value="outline">整圈（沿轮廓生长）</option>
+              <option value="top">只在上面</option>
+              <option value="bottom">只在下面</option>
+            </select>
+          </div>
+          <div style="margin-top:11px">
+            <div class="slider"><span class="k"><span>长度</span><b id="va1">0.34</b></span><input type="range" id="a1" min="0.05" max="0.90" step="0.01" value="0.34"></div>
+            <div class="slider"><span class="k"><span>长短随机</span><b id="va2">0.35</b></span><input type="range" id="a2" min="0" max="0.9" step="0.01" value="0.35"></div>
+            <div class="slider"><span class="k"><span>外张</span><b id="va3">0.55</b></span><input type="range" id="a3" min="-1.2" max="1.2" step="0.01" value="0.55"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 背景 ============ -->
+      <div class="pane" data-pane="bg">
+        <div class="field">
+          <label>背景来源</label>
+          <div class="seg" id="segBg">
+            <button data-v="procedural" class="on">程序化爆裂</button>
+            <button data-v="image">我的图片</button>
+          </div>
+        </div>
+
+        <div class="field" id="imgField" style="display:none">
+          <label>图片</label>
+          <button class="pickbtn" id="btnPick">选择图片…</button>
+          <input type="file" id="fileImg" accept="image/*" style="display:none">
+          <div class="note" id="imgNote">也可以直接把图片拖到左边的预览区。</div>
+          <div style="margin-top:12px">
+            <div class="slider"><span class="k"><span>亮度</span><b id="vi1">0.55</b></span><input type="range" id="i1" min="0.05" max="1.4" step="0.01" value="0.55"></div>
+            <div class="slider"><span class="k"><span>暗角</span><b id="vi2">0.85</b></span><input type="range" id="i2" min="0" max="1.4" step="0.01" value="0.85"></div>
+            <div class="slider"><span class="k"><span>缩放</span><b id="vi3">1.00</b></span><input type="range" id="i3" min="0.6" max="2.6" step="0.01" value="1"></div>
+          </div>
+        </div>
+
+        <div id="proceduralOnly">
+          <div class="field">
+            <label>背景配色</label>
+            <div class="chips" id="chipsBg"></div>
+          </div>
+          <div class="field">
+            <label>强调色</label>
+            <div class="swatch">
+              <input type="color" id="accentPick" value="#ff5a3c">
+              <input type="text" id="accentHex" value="#FF5A3C" spellcheck="false">
+            </div>
+            <div class="note">爆裂线和脉冲环的颜色。</div>
+          </div>
+          <div class="field">
+            <label>背景构成</label>
+            <div class="slider"><span class="k"><span>爆裂线</span><b id="vb1">0.55</b></span><input type="range" id="b1" min="0" max="1.6" step="0.01" value="0.55"></div>
+            <div class="slider"><span class="k"><span>脉冲环</span><b id="vb2">0.40</b></span><input type="range" id="b2" min="0" max="1.6" step="0.01" value="0.40"></div>
+            <div class="slider"><span class="k"><span>网点质感</span><b id="vb3">0.30</b></span><input type="range" id="b3" min="0" max="1.6" step="0.01" value="0.30"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>辉光</label>
+          <div class="slider"><span class="k"><span>辉光强度</span><b id="v3">0.55</b></span><input type="range" id="s3" min="0" max="1.6" step="0.01" value="0.55"></div>
+        </div>
+
+        <div class="field">
+          <label>元素开关</label>
+          <div class="switch"><span>火星粒子</span><button id="swSparks" class="on"></button></div>
+          <div class="switch"><span>地面</span><button id="swGround" class="on"></button></div>
+          <div class="switch"><span>脉冲环</span><button id="swRings" class="on"></button></div>
+          <div class="switch"><span>相机自转</span><button id="swSpin"></button></div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+</main>
+
+<div id="err"></div>
+
+<script type="module">
+/* ============================ 错误兜底 ============================ */
+const errBox = document.getElementById('err');
+function fail(title, detail){
+  errBox.style.display = 'block';
+  errBox.innerHTML = '<b>' + title + '</b><br>' + detail;
+  document.getElementById('loading').style.display = 'none';
+}
+addEventListener('error', e => fail('出错了', (e.message||'') + '<br>' + (e.filename||'')));
+addEventListener('unhandledrejection', e => fail('加载失败', String((e.reason && e.reason.message) || e.reason)));
+
+let THREE, TRACE, STYLEMOD, EDGE, OrbitControls;
+try {
+  THREE = await import('three');
+  TRACE = await import('/files/trace-contours.js');
+  STYLEMOD = await import('/files/stylize-contours.js');
+  EDGE = await import('/files/edge-adornments.js');
+  ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+} catch (e) {
+  fail('模块没加载下来', 'three 与 OrbitControls 需要 unpkg.com，其余模块需要本机预览服务。<br>' + e.message);
+  throw e;
+}
+
+/* ============================ 街头字体库 ============================
+   24 款来自 Google Fonts 的街头/hiphop 风格字体，全部 OFL 或 Apache 协议
+   （免费商用、可再分发）。清单由 vj-generator-lab/fonts/fetch-fonts.mjs 生成。
+
+   加载方式：fetch 成 ArrayBuffer 再喂给 FontFace。刻意不走 url() ——
+   预览服务对 .ttf 返回 application/octet-stream，走 url() 可能因 MIME 被拒。
+   ArrayBuffer 绕开这个判断，而且本地文件和 CDN 两条路都能用。
+   拿到的字体进 document.fonts，之后画布描轮廓那套流程完全不用改。 */
+let FONTS = [];
+try {
+  const r = await fetch('/files/fonts.json');
+  if (r.ok) FONTS = await r.json();
+} catch (e) { console.warn('字体清单加载失败', e); }
+
+const SYS_FONTS = [
+  ['Noto Sans SC', '思源黑体（系统）'],
+  ['Microsoft YaHei', '微软雅黑（系统）'],
+  ['SimHei', '黑体（系统）'],
+  ['SimSun', '宋体（系统）'],
+  ['KaiTi', '楷体（系统）'],
+  ['DengXian', '等线（系统）'],
+  ['Noto Serif SC', '思源宋体（系统）'],
+  ['Impact', 'Impact（系统）'],
+  ['Arial Black', 'Arial Black（系统）'],
+];
+
+let currentFamily = 'Noto Sans SC';
+const loadedFaces = new Set();
+
+async function ensureWebFont(def) {
+  if (loadedFaces.has(def.family)) return def.family;
+  const cands = [
+    `/files/${def.file}`,
+    `https://cdn.jsdelivr.net/gh/google/fonts@main/${def.bucket}/${def.dir}/${encodeURIComponent(def.file)}`,
+    `https://fastly.jsdelivr.net/gh/google/fonts@main/${def.bucket}/${def.dir}/${encodeURIComponent(def.file)}`,
+  ];
+  let lastErr = null;
+  for (const url of cands) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const buf = await res.arrayBuffer();
+      if (buf.byteLength < 1024) throw new Error('文件过小');
+      const face = new FontFace(def.family, buf);
+      await face.load();
+      document.fonts.add(face);
+      loadedFaces.add(def.family);
+      return def.family;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('所有字体源都不可用');
+}
+
+/* ============================ 提前声明的共享状态 ============================
+   ResizeObserver 的回调和 sizeToStage 都会用到这几个变量，而它们的回调可能在
+   模块顶层的 await 还没结束时就触发 —— 用 let 在后面声明会踩 TDZ 直接报错。
+   所以统一提到最前面。 */
+let composer = null, bloomPass = null;
+let userMovedCamera = false;
+
+/* ============================ 渲染器 / 场景 / 相机 ============================ */
+const stageWrap = document.getElementById('stageWrap');
+const renderer = new THREE.WebGLRenderer({
+  antialias:true, powerPreference:'high-performance',
+  preserveDrawingBuffer:true          // 录制需要，否则可能抓到空帧
+});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stageWrap.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(34, 16/9, 0.05, 300);
+camera.position.set(0, 0.5, 7.5);
+scene.add(camera);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.rotateSpeed = 0.85;
+controls.minDistance = 1.2;
+controls.maxDistance = 60;
+controls.target.set(0, 0, 0);
+controls.update();
+
+function sizeToStage(){
+  const w = stageWrap.clientWidth || 960;
+  const h = stageWrap.clientHeight || 540;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  if (composer) composer.setSize(w, h);
+  fitBackdrop();
+}
+new ResizeObserver(() => { sizeToStage(); if (!userMovedCamera) frameObject(); }).observe(stageWrap);
+
+/* ============================ 循环周期 ============================
+   所有随时间演化的量都写成「每个循环周期内整数次」，不写自由秒数。
+   这样动画本身就带周期，录制任意一个完整周期都能无缝首尾相接。
+   周期由导出条上的「时长」滑块决定。 */
+let loopSeconds = 8;
+const TAU = Math.PI * 2;
+let phase = 0;                 // 0..1，一个循环内的进度
+let clockTime = 0;             // 累计时间，只用于推进 phase
+
+/* ============================ 爆裂背景 ============================ */
+const bgMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uPhase:{value:0}, uPar:{value:new THREE.Vector2(0,0)}, uAspect:{value:16/9},
+    uHot:{value:new THREE.Color('#8a1220')},
+    uMid:{value:new THREE.Color('#3a0308')},
+    uDeep:{value:new THREE.Color('#040103')},
+    uAccent:{value:new THREE.Color('#ff5a3c')},
+    uRays:{value:54}, uRayGain:{value:0.55},
+    uRingGain:{value:0.40}, uDotGain:{value:0.30}
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
+  `,
+  fragmentShader: `
+    varying vec2 vUv;
+    uniform float uPhase, uAspect, uRays, uRayGain, uRingGain, uDotGain;
+    uniform vec2 uPar;
+    uniform vec3 uHot, uMid, uDeep, uAccent;
+
+    void main(){
+      vec2 c = vUv - 0.5 - uPar;
+      c.x *= uAspect;
+      float r = length(c) * 2.0;
+      float a = atan(c.y, c.x);
+
+      vec3 col = mix(uHot, uMid, smoothstep(0.0, 0.42, r));
+      col = mix(col, uDeep, smoothstep(0.30, 1.00, r));
+
+      // 放射爆炸线：每循环转一圈
+      float ray = pow(abs(sin(a * uRays * 0.5 + uPhase * 6.2831853)), 5.0);
+      float rayFall = smoothstep(1.25, 0.10, r) * smoothstep(0.02, 0.16, r);
+      col += mix(uAccent, uHot, 0.45) * ray * rayFall * uRayGain;
+
+      // 同心脉冲环：每循环向外推 3 圈
+      float ring = pow(abs(sin(r * 9.0 - uPhase * 18.849556)), 44.0);
+      col += uAccent * ring * smoothstep(1.10, 0.18, r) * uRingGain;
+
+      // 半调网点：印刷质感
+      vec2 gd = fract(vUv * vec2(140.0 * uAspect, 140.0)) - 0.5;
+      float ht = smoothstep(0.34, 0.09, length(gd));
+      col += uMid * ht * (0.25 + 0.85 * r) * uDotGain;
+
+      col *= 1.0 - smoothstep(0.42, 1.18, r) * 0.96;
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `,
+  depthWrite:false, depthTest:false, side:THREE.DoubleSide
+});
+const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(1,1), bgMat);
+bgMesh.position.z = -20;
+bgMesh.renderOrder = -1000;
+bgMesh.frustumCulled = false;
+camera.add(bgMesh);
+
+/* ---- 用户图片背景：和程序化背景共用同一个位置，二选一显示 ----
+   也挂在相机上、按视锥尺寸铺满，所以任何视角都不变形。
+   图片按 cover 适配；亮度/暗角在这里压，保证 3D 字始终能跳出来。 */
+const imgMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uHas:{value:0}, uTex:{value:null}, uAspect:{value:16/9}, uImgAspect:{value:1},
+    uDim:{value:0.55}, uVig:{value:0.85}, uZoom:{value:1.0}
+  },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    varying vec2 vUv;
+    uniform sampler2D uTex;
+    uniform float uHas, uAspect, uImgAspect, uDim, uVig, uZoom;
+    void main(){
+      if (uHas < 0.5) { gl_FragColor = vec4(0.016, 0.008, 0.02, 1.0); return; }
+      // cover 适配：屏幕更宽就裁图片上下，图片更宽就裁左右
+      vec2 uv = vUv - 0.5;
+      if (uAspect > uImgAspect) uv.y *= uImgAspect / uAspect;
+      else                      uv.x *= uAspect / uImgAspect;
+      uv = uv / uZoom + 0.5;
+      vec3 c = texture2D(uTex, clamp(uv, 0.0, 1.0)).rgb;
+      c = pow(c, vec3(2.2));                       // sRGB → 线性（最终由 OutputPass 统一编码）
+      c *= uDim;
+      float r = length(vUv - 0.5) * 2.0;
+      c *= 1.0 - smoothstep(0.42, 1.2, r) * uVig;
+      gl_FragColor = vec4(c, 1.0);
+    }
+  `,
+  depthWrite:false, depthTest:false, side:THREE.DoubleSide
+});
+const imgMesh = new THREE.Mesh(new THREE.PlaneGeometry(1,1), imgMat);
+imgMesh.position.z = -20;
+imgMesh.renderOrder = -1000;
+imgMesh.frustumCulled = false;
+imgMesh.visible = false;
+camera.add(imgMesh);
+
+scene.add(camera);
+
+function fitBackdrop(){
+  const d = 20;
+  const h = 2 * Math.tan(camera.fov * Math.PI / 360) * d;
+  const w = h * camera.aspect;
+  bgMesh.scale.set(w, h, 1);
+  imgMesh.scale.set(w, h, 1);
+  bgMat.uniforms.uAspect.value = camera.aspect;
+  imgMat.uniforms.uAspect.value = camera.aspect;
+}
+
+/* ============================ 地面 ============================
+   之前是一块 120×120 的硬边平面：远处边缘在屏幕上留下一条笔直的地平线，
+   下半部被灯光打成一片灰白，整幅画就"分层"了。
+   修法不是把它改小（那样边更明显），而是用一张径向 alpha 贴图让它
+   往外自然淡出到零 —— 没有边，就没有地平线。 */
+function makeRadialAlpha(){
+  const S = 512;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0,0,S,S);
+  const rg = g.createRadialGradient(S/2,S/2,0, S/2,S/2,S/2);
+  rg.addColorStop(0.00,'#ffffff');
+  rg.addColorStop(0.30,'#f2f2f2');
+  rg.addColorStop(0.55,'#8a8a8a');
+  rg.addColorStop(0.80,'#242424');
+  rg.addColorStop(1.00,'#000000');
+  g.fillStyle = rg; g.fillRect(0,0,S,S);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.NoColorSpace;   // alphaMap 只取绿通道，不该做色彩转换
+  return t;
+}
+const groundMat = new THREE.MeshStandardMaterial({
+  color:0x0d0305, roughness:0.88, metalness:0.12,
+  alphaMap: makeRadialAlpha(), transparent:true, depthWrite:true
+});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(90,90), groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -1.55;
+ground.renderOrder = -50;      // 在火星之前画，避免透明物体排序把地面盖到粒子上
+scene.add(ground);
+
+const key  = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(2.5,4.5,6); scene.add(key);
+const rimL = new THREE.PointLight(0xff1f2e, 55, 44); rimL.position.set(-6,-1.6,4); scene.add(rimL);
+const rimR = new THREE.PointLight(0xff3344, 44, 44); rimR.position.set(6,2.0,-3); scene.add(rimR);
+const topW = new THREE.PointLight(0xcfe2ff, 26, 44); topW.position.set(0,6.5,2); scene.add(topW);
+
+/* ============================ 火星 ============================
+   之前用 PointsMaterial，整片一个透明度，粒子场就是个有边的长方体
+   （所以画面上能看到矩形边界）。改成自定义着色器 + 每颗粒子自己的
+   alpha：靠近场边缘的粒子淡出到零，边界就消失了。
+   位置仍然是相位的确定函数（不积分），保证可复现、可无缝循环。 */
+const SPARK_N = 760;
+const sparks = (() => {
+  const g = new THREE.BufferGeometry();
+  const pos   = new Float32Array(SPARK_N*3);
+  const base  = new Float32Array(SPARK_N*3);
+  const off   = new Float32Array(SPARK_N);
+  const alpha = new Float32Array(SPARK_N);
+  const size  = new Float32Array(SPARK_N);
+  const Y0 = -5.5, Y1 = 7.5;
+  const XR = 30, ZR = 18;                       // 场半径：远大于取景范围
+  for (let i=0;i<SPARK_N;i++){
+    const bx = (Math.random()-0.5)*2*XR;
+    const bz = (Math.random()-0.5)*2*ZR - 2;
+    base[i*3] = bx; base[i*3+2] = bz;
+    off[i] = Math.random();
+    // 场边缘淡出：任何方向接近边界都归零，边界自然不可见
+    const e = Math.max(Math.abs(bx)/XR, Math.abs(bz + 2)/ZR);
+    alpha[i] = Math.max(0, 1 - Math.max(0, (e - 0.55) / 0.45));
+    size[i] = 0.6 + Math.random()*0.9;
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setAttribute('aAlpha', new THREE.BufferAttribute(alpha,1));
+  g.setAttribute('aSize', new THREE.BufferAttribute(size,1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: {
+      uColor:{value:new THREE.Color(0xffb066)},
+      uOpacity:{value:0.9},
+      uBase:{value:0.055}
+    },
+    vertexShader: `
+      attribute float aAlpha;
+      attribute float aSize;
+      uniform float uBase;
+      varying float vA;
+      void main(){
+        vA = aAlpha;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = uBase * aSize * 620.0 / max(-mv.z, 0.1);
+        gl_Position = projectionMatrix * mv;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      varying float vA;
+      void main(){
+        vec2 d = gl_PointCoord - 0.5;
+        float m = smoothstep(0.5, 0.04, length(d));
+        float a = m * vA * uOpacity;
+        if (a < 0.004) discard;
+        gl_FragColor = vec4(uColor, a);
+      }
+    `,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const pts = new THREE.Points(g,m);
+  pts.frustumCulled = false;
+  return { pts, pos, base, off, g, m, Y0, Y1 };
+})();
+scene.add(sparks.pts);
+
+/* ============================ 环境贴图 ============================ */
+function panel(s, w, h, rgb, pos){
+  const mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+  mat.color.setRGB(rgb[0], rgb[1], rgb[2]);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.set(pos[0], pos[1], pos[2]);
+  m.lookAt(0,0,0);
+  s.add(m);
+}
+const ENVS = {
+  red: { bg:0x05050a, panels:[
+    [24,5,[6.0,6.0,6.4],[0,12,0]], [18,5,[1.5,1.5,1.7],[0,-11,0]],
+    [13,13,[3.6,0.10,0.14],[-14,0,0]], [13,13,[2.9,0.09,0.13],[14,0,0]],
+    [14,14,[0.60,1.40,2.60],[0,0,-15]], [8,8,[2.4,2.4,2.6],[0,2,15]],
+    [5,5,[0.9,0.15,0.20],[-6,8,6]] ]},
+  studio: { bg:0x0a0a0d, panels:[
+    [30,7,[5.0,5.1,5.4],[0,13,0]], [22,6,[2.2,2.3,2.5],[0,-12,0]],
+    [14,14,[3.2,3.3,3.5],[-15,1,0]], [14,14,[2.4,2.5,2.7],[15,1,0]],
+    [14,14,[1.7,1.8,2.0],[0,0,-16]], [10,10,[3.0,3.1,3.3],[0,3,16]],
+    [4,4,[6.0,6.0,6.2],[-7,9,7]], [4,4,[4.5,4.5,4.8],[8,-6,-6]] ]},
+  warm: { bg:0x0e0904, panels:[
+    [26,6,[6.0,4.4,2.0],[0,12,0]], [18,5,[1.8,1.2,0.5],[0,-11,0]],
+    [13,13,[3.4,2.2,0.7],[-14,0,0]], [13,13,[2.6,1.6,0.5],[14,0,0]],
+    [14,14,[0.9,0.6,0.3],[0,0,-15]], [8,8,[4.0,3.0,1.4],[0,2,15]] ]},
+  cold: { bg:0x04070e, panels:[
+    [24,6,[3.6,5.0,6.4],[0,12,0]], [18,5,[1.0,1.6,2.2],[0,-11,0]],
+    [13,13,[0.5,2.2,3.6],[-14,0,0]], [13,13,[0.7,1.6,3.0],[14,0,0]],
+    [14,14,[2.6,3.2,4.0],[0,0,-15]], [9,9,[3.0,3.6,4.2],[0,3,15]] ]},
+  dark: { bg:0x030204, panels:[
+    [18,4,[3.4,3.4,3.6],[0,13,0]], [10,10,[1.6,0.08,0.10],[-15,0,0]],
+    [10,10,[1.2,0.06,0.08],[15,0,0]], [10,10,[0.3,0.5,0.9],[0,0,-16]],
+    [3,3,[4.0,4.0,4.2],[-6,9,8]] ]}
+};
+const envCache = new Map();
+const pmrem = new THREE.PMREMGenerator(renderer);
+function getEnv(kind){
+  if (envCache.has(kind)) return envCache.get(kind);
+  const cfg = ENVS[kind] || ENVS.red;
+  const s = new THREE.Scene();
+  s.add(new THREE.Mesh(new THREE.BoxGeometry(46,46,46),
+        new THREE.MeshBasicMaterial({ color: cfg.bg, side: THREE.BackSide })));
+  cfg.panels.forEach(p => panel(s, p[0], p[1], p[2], p[3]));
+  const tex = pmrem.fromScene(s, 0.035).texture;
+  s.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  envCache.set(kind, tex);
+  return tex;
+}
+
+/* ============================ 表面材质 ============================
+   时间一律用 uPhase（0..1 的循环进度）而不是秒，这样着色器里的
+   闪烁/裂纹也自带周期，录出来的视频首尾天然接得上。 */
+function makeSurface(cfg){
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: cfg.color, metalness: cfg.metalness, roughness: cfg.roughness,
+    envMap: getEnv(cfg.env), envMapIntensity: cfg.envMapIntensity,
+    clearcoat: cfg.clearcoat ?? 0, clearcoatRoughness: cfg.clearcoatRoughness ?? 0.06,
+    iridescence: cfg.iridescence ?? 0, iridescenceIOR: cfg.iridescenceIOR ?? 1.3
+  });
+  const u = {
+    uPhase:{value:0}, uPaveScale:{value:30},
+    uPaveHeight:{value: cfg.pave ? cfg.pave.height : 0},
+    uPaveJitter:{value: cfg.pave ? (cfg.pave.jitter ?? 0.55) : 0},
+    uPaveSize:{value: cfg.pave ? (cfg.pave.size ?? 0.42) : 0.42},
+    uGlint:{value: cfg.pave ? (cfg.pave.glint ?? 0.9) : 0},
+    uGlintColor:{value: new THREE.Color(cfg.pave ? (cfg.pave.glintColor || 0xfff6e8) : 0xffffff)},
+    uCrackScale:{value:6},
+    uCrack:{value: cfg.cracks ? cfg.cracks.intensity : 0},
+    uCrackColor:{value: new THREE.Color(cfg.cracks ? cfg.cracks.color : 0xff4a12)}
+  };
+  mat.userData.u = u;
+  mat.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, u);
+    shader.vertexShader = 'varying vec3 vObjPos;\n' + shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
+       #ifdef USE_INSTANCING
+         vObjPos = (instanceMatrix * vec4(position,1.0)).xyz;
+       #else
+         vObjPos = position;
+       #endif`
+    );
+    shader.fragmentShader =
+      'varying vec3 vObjPos;\n' +
+      'uniform float uPhase, uPaveScale, uPaveHeight, uPaveJitter, uPaveSize, uGlint;\n' +
+      'uniform vec3 uGlintColor;\nuniform float uCrackScale, uCrack;\nuniform vec3 uCrackColor;\n' +
+      'float paveHash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }\n' +
+      shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <normal_fragment_maps>',
+      `#include <normal_fragment_maps>
+       vec2 pv  = vObjPos.xy * uPaveScale;
+       vec2 pid = floor(pv);
+       vec2 pf  = fract(pv);
+       float ph1 = paveHash(pid);
+       float ph2 = paveHash(pid + 17.31);
+       float ph3 = paveHash(pid + 41.77);
+       vec2  pc = vec2(0.5) + (vec2(ph1, ph2) - 0.5) * uPaveJitter;
+       float pr = mix(0.30, 0.50, ph3) * uPaveSize;
+       vec2  pd = pf - pc;
+       float pl = length(pd);
+       float pdome = 1.0 - smoothstep(pr*0.42, pr, pl);
+       float phgt  = uPaveHeight * mix(0.70, 1.28, ph1);
+       vec3 pn  = normalize(normal);
+       vec3 pup = abs(pn.y) < 0.99 ? vec3(0.0,1.0,0.0) : vec3(1.0,0.0,0.0);
+       vec3 pt  = normalize(cross(pup, pn));
+       vec3 pb  = cross(pn, pt);
+       vec2 pgr = pd / max(pr, 0.001);
+       normal = normalize(pn + (pt*pgr.x + pb*pgr.y) * pdome * phgt * 2.0);
+       vec2 cvv = vObjPos.xy * uCrackScale;
+       float cn = sin(cvv.x*1.7 + sin(cvv.y*2.3)*1.25) * sin(cvv.y*2.1 + sin(cvv.x*1.9)*1.15);
+       float vein = smoothstep(0.84, 1.0, abs(cn));`
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <emissivemap_fragment>',
+      `#include <emissivemap_fragment>
+       // 每循环闪 11 次；每颗钻相位不同，所以是一颗颗陆续炸亮
+       float pt2 = pow(max(0.0, sin(uPhase * 69.11504 + ph1 * 6.2831853)), 26.0);
+       totalEmissiveRadiance += uGlintColor * pt2 * uGlint * pdome * (0.35 + 0.65*ph2);
+       // 裂缝：每循环脉动 5 次
+       totalEmissiveRadiance += uCrackColor * vein * uCrack * (0.68 + 0.32*sin(uPhase * 31.41593));`
+    );
+  };
+  return mat;
+}
+
+/* ============================ 材质与背景预设 ============================ */
+const MATERIALS = {
+  pave: { label:'钻石满镶', bloom:0.55, lit:[0xff1f2e,0xff3344], spark:0xffb066,
+    face:{ color:0xf2f6ff, metalness:0.30, roughness:0.16, env:'red', envMapIntensity:1.95,
+           clearcoat:1.0, clearcoatRoughness:0.06,
+           pave:{ height:0.85, jitter:0.55, size:0.42, glint:0.95 } },
+    edge:{ color:0xffffff, metalness:1.0, roughness:0.07, env:'red', envMapIntensity:2.2,
+           clearcoat:1.0, clearcoatRoughness:0.03 } },
+  chrome: { label:'液态铬', bloom:0.40, lit:[0xff2233,0xff5566], spark:0xffc9a0,
+    face:{ color:0xffffff, metalness:1.0, roughness:0.045, env:'studio', envMapIntensity:2.6 },
+    edge:{ color:0xffffff, metalness:1.0, roughness:0.03, env:'studio', envMapIntensity:2.8 } },
+  gold: { label:'黄金', bloom:0.38, lit:[0xff9020,0xffb040], spark:0xffd27a,
+    face:{ color:0xffcf6a, metalness:1.0, roughness:0.13, env:'warm', envMapIntensity:2.2 },
+    edge:{ color:0xfff0b8, metalness:1.0, roughness:0.05, env:'warm', envMapIntensity:2.4 } },
+  molten: { label:'熔岩裂铁', bloom:0.95, lit:[0xff3a10,0xff6a20], spark:0xff7a20,
+    face:{ color:0x2b3038, metalness:0.92, roughness:0.34, env:'dark', envMapIntensity:1.3,
+           cracks:{ color:0xff4a12, intensity:2.4 } },
+    edge:{ color:0x3a4048, metalness:1.0, roughness:0.26, env:'dark', envMapIntensity:1.5 } },
+  ice: { label:'冰晶', bloom:0.50, lit:[0x3aa0ff,0x7fd0ff], spark:0x9fd8ff,
+    face:{ color:0xbfe6ff, metalness:0.10, roughness:0.07, env:'cold', envMapIntensity:2.3,
+           clearcoat:1.0, clearcoatRoughness:0.04, iridescence:1.0, iridescenceIOR:1.6,
+           pave:{ height:0.30, jitter:0.5, size:0.40, glint:0.5, glintColor:0xdff2ff },
+           cracks:{ color:0x66ccff, intensity:0.55 } },
+    edge:{ color:0xe8f6ff, metalness:1.0, roughness:0.04, env:'cold', envMapIntensity:2.6 } },
+  neon: { label:'霓虹裂光', bloom:1.15, lit:[0xff2fd0,0x8a2be2], spark:0xff8ae0,
+    face:{ color:0x0b0a12, metalness:0.62, roughness:0.26, env:'dark', envMapIntensity:1.1,
+           clearcoat:1.0, clearcoatRoughness:0.05,
+           cracks:{ color:0xff2fd0, intensity:2.8 },
+           pave:{ height:0.16, jitter:0.6, size:0.4, glint:0.7, glintColor:0xff9ae8 } },
+    edge:{ color:0x120a1c, metalness:1.0, roughness:0.12, env:'dark', envMapIntensity:1.4 } }
+};
+
+const BACKDROPS = {
+  blood: { label:'血焰红', hot:'#8a1220', mid:'#3a0308', deep:'#040103', accent:'#ff5a3c', rays:54, ray:0.55, ring:0.40, dot:0.30, lit:[0xff1f2e,0xff3344], spark:0xffb066 },
+  gold:  { label:'熔金',   hot:'#6a3c08', mid:'#2a1603', deep:'#040301', accent:'#ffc45c', rays:44, ray:0.55, ring:0.42, dot:0.34, lit:[0xff9020,0xffb040], spark:0xffd27a },
+  ice:   { label:'冰封',   hot:'#12496e', mid:'#061a2a', deep:'#010306', accent:'#9fe4ff', rays:80, ray:0.45, ring:0.38, dot:0.42, lit:[0x3aa0ff,0x7fd0ff], spark:0x9fd8ff },
+  neon:  { label:'霓虹紫', hot:'#5a0a52', mid:'#1e0320', deep:'#040105', accent:'#ff2fd0', rays:96, ray:0.60, ring:0.60, dot:0.36, lit:[0xff2fd0,0x8a2be2], spark:0xff8ae0 }
+};
+
+/* ============================ 边缘装饰形态 ============================
+   分三类，这样"换形态"才真的换的是形态，而不是换一种尖刺：
+     尖刺类 —— 锥形收尖（尖锥 / 獠牙 / 刀刃 / 长针）
+     块状类 —— 不靠收尖取胜（方块 / 声波柱 / 齿轮齿）
+     圆环类 —— 圆润、无尖端（圆珠 / 圆环 / 铆钉 / 滴落 / 火焰 / 碎钻晶簇）
+   noSpin: 生成实例时不做随机自转（声波柱要整齐朝向观众才像频谱） */
+const ADORN_FORMS = {
+  cone:   { label:'尖锥',     kind:'尖刺', make: () => new THREE.ConeGeometry(0.058, 1, 10, 1, false) },
+  fang:   { label:'獠牙',     kind:'尖刺', make: () => {
+            const g = new THREE.ConeGeometry(0.074, 1, 10, 1, false);
+            const p = g.attributes.position;
+            for (let i=0;i<p.count;i++){
+              const k = p.getY(i) + 0.5;
+              p.setX(i, p.getX(i) + k*k*0.26);
+              p.setZ(i, p.getZ(i) * (1 - 0.28*k));
+            }
+            return g;
+          } },
+  blade:  { label:'刀刃',     kind:'尖刺', make: () => {
+            const g = new THREE.ConeGeometry(0.068, 1, 4, 1, false);
+            g.scale(1, 1, 0.26); g.rotateY(Math.PI/4); return g;
+          } },
+  needle: { label:'长针',     kind:'尖刺', make: () => new THREE.ConeGeometry(0.021, 1, 7, 1, false) },
+
+  box:    { label:'方块',     kind:'块状', make: () => new THREE.BoxGeometry(0.085, 1, 0.085) },
+  gear:   { label:'齿轮齿',   kind:'块状', make: () => new THREE.CylinderGeometry(0.052, 0.078, 1, 4, 1, false) },
+  bar:    { label:'声波柱',   kind:'块状', noSpin:true, make: () => new THREE.BoxGeometry(0.055, 1, 0.028) },
+
+  sphere: { label:'圆珠',     kind:'圆环', make: () => new THREE.SphereGeometry(0.075, 16, 12) },
+  ring:   { label:'圆环',     kind:'圆环', noSpin:true, make: () => {
+            const g = new THREE.TorusGeometry(0.072, 0.021, 8, 20);
+            g.rotateX(Math.PI/2);      // 环平面垂直于生长轴，像套在边缘上
+            return g;
+          } },
+  stud:   { label:'铆钉',     kind:'圆环', make: () => new THREE.SphereGeometry(0.072, 14, 8, 0, Math.PI*2, 0, Math.PI*0.5) },
+  shard:  { label:'碎钻晶簇', kind:'圆环', make: () => new THREE.CylinderGeometry(0.010, 0.062, 1, 5, 1, false) },
+  drip:   { label:'滴落',     kind:'圆环', make: () => {
+            const pts = [];
+            for (let i=0;i<=12;i++){
+              const t = i/12;
+              const r = Math.sin(Math.pow(t,0.8)*Math.PI) * 0.105 * (1 - 0.5*t) + 0.004;
+              pts.push(new THREE.Vector2(r, t));
+            }
+            return new THREE.LatheGeometry(pts, 14);
+          } },
+  flame:  { label:'火焰',     kind:'圆环', make: () => {
+            const pts = [];
+            for (let i=0;i<=14;i++){
+              const t = i/14;
+              const r = Math.sin(Math.pow(t,0.5)*Math.PI) * 0.088 * (1 - 0.78*t) + 0.003;
+              pts.push(new THREE.Vector2(r, t));
+            }
+            const g = new THREE.LatheGeometry(pts, 12);
+            const p = g.attributes.position;          // 往一侧舔，别像锥子
+            for (let i=0;i<p.count;i++){
+              const y = p.getY(i);
+              p.setX(i, p.getX(i) + Math.sin(y * 4.2) * 0.038 * y);
+            }
+            return g;
+          } },
+  bolt:   { label:'闪电',     kind:'尖刺', make: () => {
+            const w = 0.075;
+            const s = new THREE.Shape();
+            s.moveTo(0, 0);
+            s.lineTo(w, 0.06);
+            s.lineTo(w*0.38, 0.52);
+            s.lineTo(w*1.15, 0.44);
+            s.lineTo(w*0.18, 1.0);
+            s.lineTo(-w*0.30, 0.60);
+            s.lineTo(w*0.28, 0.60);
+            s.closePath();
+            const g = new THREE.ExtrudeGeometry(s, { depth: w*0.7, bevelEnabled:false, curveSegments:1 });
+            g.translate(0, 0, -w*0.35);
+            return g;
+          } }
+};
+
+/* ============================ 字形 ============================ */
+const FIT_BOX_W = 5.9, FIT_BOX_H = 2.30;
+
+function letterformFromCanvas(text, family, weight, style){
+  const meas = document.createElement('canvas').getContext('2d');
+  meas.font = `${weight} 100px "${family}", sans-serif`;
+  const unitW = Math.max(meas.measureText(text).width / 100, 1e-4);
+  const fontSize = Math.max(48, Math.min(360, (4096 - 80) / unitW));
+
+  meas.font = `${weight} ${fontSize}px "${family}", sans-serif`;
+  const m = meas.measureText(text);
+  const asc = m.actualBoundingBoxAscent ?? fontSize * 0.82;
+  const desc = m.actualBoundingBoxDescent ?? fontSize * 0.22;
+  const pad = 40;
+  const W = Math.ceil(m.width) + pad*2;
+  const H = Math.ceil(asc + desc) + pad*2;
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently:true });
+  ctx.font = `${weight} ${fontSize}px "${family}", sans-serif`;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(text, pad, pad + asc);
+
+  const rgba = ctx.getImageData(0, 0, W, H).data;
+  const alpha = new Uint8Array(W * H);
+  for (let i = 0, n = W*H; i < n; i++) alpha[i] = rgba[i*4 + 3];
+
+  const t0 = performance.now();
+  const res = TRACE.traceContours(alpha, W, H);
+  const traceMs = performance.now() - t0;
+
+  const norm = 1 / Math.max(res.bbox.inkH, 1);
+  const scaled = res.groups.map(g => ({
+    outer: g.outer.map(p => ({x:p.x*norm, y:p.y*norm})),
+    holes: g.holes.map(h => h.map(p => ({x:p.x*norm, y:p.y*norm})))
+  }));
+  const t1 = performance.now();
+  const styled = STYLEMOD.stylizeGroups(scaled, style);
+  const styleMs = performance.now() - t1;
+
+  let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
+  for (const g of styled) for (const ring of [g.outer, ...g.holes]) for (const p of ring){
+    if(p.x<mnx)mnx=p.x; if(p.x>mxx)mxx=p.x; if(p.y<mny)mny=p.y; if(p.y>mxy)mxy=p.y;
+  }
+  if (!isFinite(mnx)) return { shapes:[], res, traceMs, styleMs, canvasW:W, canvasH:H, inkW:1, inkH:1, outline:null };
+  const ccx=(mnx+mxx)/2, ccy=(mny+mxy)/2;
+  const shapes = styled.map(g => {
+    const sh = new THREE.Shape(g.outer.map(p => new THREE.Vector2(p.x-ccx, p.y-ccy)));
+    sh.holes = g.holes.map(h => new THREE.Path(h.map(p => new THREE.Vector2(p.x-ccx, p.y-ccy))));
+    return sh;
+  });
+
+  // 给"整圈"装饰用：取面积最大的那条外轮廓（也就是主体剪影）
+  let outline = null, bestArea = -1;
+  for (const g of styled){
+    let a = 0;
+    const r = g.outer;
+    for (let i=0,n=r.length;i<n;i++){ const p=r[i], q=r[(i+1)%n]; a += p.x*q.y - q.x*p.y; }
+    a = Math.abs(a/2);
+    if (a > bestArea){ bestArea = a; outline = r; }
+  }
+  if (outline) outline = outline.map(p => ({ x: p.x - ccx, y: p.y - ccy }));
+
+  return { shapes, res, traceMs, styleMs, canvasW:W, canvasH:H, outline,
+           inkW: Math.max(mxx-mnx, 1e-3), inkH: Math.max(mxy-mny, 1e-3) };
+}
+
+function profileOf(geo, bins){
+  const pos = geo.attributes.position;
+  const pts = [];
+  for (let i=0;i<pos.count;i+=3) pts.push({ x: pos.getX(i), y: pos.getY(i) });
+  return EDGE.profileFromPoints(pts, bins);
+}
+
+function buildAdornments(geo, material, opts){
+  const form = ADORN_FORMS[opts.form] || ADORN_FORMS.cone;
+
+  // 整圈模式走另一条路：沿外轮廓等弧长采样、朝外法线生长。
+  // 只在上下边缘长的话，换任何形状都还是"头顶一排刺"。
+  const layout = (opts.sides === 'outline' && opts.outline && opts.outline.length >= 3)
+    ? EDGE.outlinePlacements(opts.outline, {
+        spacing: opts.spacing, pattern: opts.pattern,
+        base: opts.base, jitter: opts.jitter, seed: opts.seed
+      })
+    : EDGE.layoutAdornments({
+        profile: profileOf(geo, opts.count),
+        sides: opts.sides, pattern: opts.pattern,
+        base: opts.base, jitter: opts.jitter, lean: opts.lean, seed: opts.seed
+      });
+
+  const g = EDGE.normalizeUnitHeight(form.make());
+  const mesh = new THREE.InstancedMesh(g, material, layout.length);
+  mesh.frustumCulled = false;
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+  const spin = new THREE.Quaternion(), tiltQ = new THREE.Quaternion();
+  const axisY = new THREE.Vector3(0,1,0), axisZ = new THREE.Vector3(0,0,1);
+  const zero = new THREE.Quaternion();
+  const v = new THREE.Vector3(), s = new THREE.Vector3();
+  layout.forEach((p, i) => {
+    v.set(p.x, p.y, 0);
+    s.set(p.thick, p.len, p.thick);
+    // angleZ 把几何体自身的 +Y（生长轴）转到目标朝向：上=0，下=π，整圈=外法线角
+    q.setFromAxisAngle(axisZ, p.angleZ);
+    if (!form.noSpin){ spin.setFromAxisAngle(axisY, p.spin); q.multiply(spin); }
+    if (p.tilt){ tiltQ.setFromAxisAngle(axisZ, p.tilt); q.multiply(tiltQ); }
+    m.compose(v, q, s);
+    mesh.setMatrixAt(i, m);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  return mesh;
+}
+
+/* ============================ 状态 ============================ */
+const group = new THREE.Group();
+scene.add(group);
+let current = { face:null, edge:null, matKey:null };
+let textMesh = null, spikeMesh = null, lastGeo = null, lastCount = 24, lastOutline = null;
+let paveDensity = 22, depth = 0.22, bevelSize = 0.022, bloomStrength = 0.55;
+let matKey = 'pave', bgKey = 'blood';
+let loopSpin = false, objSway = true;
+
+const style = { dilate:0.030, spike:1.20, shear:0.14, arch:0.08, round:0.000, rough:0.000, persp:0.10, seed:1337 };
+const adorn = { form:'cone', pattern:'fan', sides:'both', base:0.34, jitter:0.35, lean:0.55, spacing:0.13, seed:20261007 };
+
+document.getElementById('loading').style.display = 'none';
+
+/* ============================ 应用材质 / 背景 ============================ */
+function applyMaterial(key){
+  matKey = key;
+  const cfg = MATERIALS[key];
+  const face = makeSurface(cfg.face), edge = makeSurface(cfg.edge);
+  const oldFace = current.face, oldEdge = current.edge;
+  if (textMesh)  textMesh.material  = [face, edge];
+  if (spikeMesh) spikeMesh.material = face;
+  if (oldFace) oldFace.dispose();
+  if (oldEdge) oldEdge.dispose();
+  current = { face, edge, matKey:key };
+  bloomStrength = cfg.bloom;
+  if (bloomPass) bloomPass.strength = bloomStrength;
+  setSlider('s2','v2', cfg.face.roughness, 2);
+  setSlider('s3','v3', cfg.bloom, 2);
+  applyDensity();
+  sparks.m.uniforms.uColor.value.setHex(BACKDROPS[bgKey].spark);
+}
+
+function applyBackdrop(key){
+  bgKey = key;
+  const b = BACKDROPS[key];
+  bgMat.uniforms.uHot.value.set(b.hot);
+  bgMat.uniforms.uMid.value.set(b.mid);
+  bgMat.uniforms.uDeep.value.set(b.deep);
+  bgMat.uniforms.uAccent.value.set(b.accent);
+  bgMat.uniforms.uRays.value = b.rays;
+  bgMat.uniforms.uRayGain.value = b.ray;
+  lastRingGain = b.ring;
+  bgMat.uniforms.uRingGain.value = ringsOn ? b.ring : 0;
+  bgMat.uniforms.uDotGain.value = b.dot;
+  setSlider('b1','vb1', b.ray, 2);
+  setSlider('b2','vb2', b.ring, 2);
+  setSlider('b3','vb3', b.dot, 2);
+  setColorInputs(b.accent);
+  rimL.color.setHex(b.lit[0]);
+  rimR.color.setHex(b.lit[1]);
+  sparks.m.uniforms.uColor.value.setHex(b.spark);
+}
+
+function applyDensity(){
+  const u = current.face && current.face.userData.u;
+  if (!u) return;
+  u.uPaveScale.value = paveDensity;
+  u.uCrackScale.value = paveDensity / 7;
+}
+
+function rebuildSpikes(){
+  if (!lastGeo || !current.face) return;
+  if (spikeMesh){ group.remove(spikeMesh); spikeMesh.geometry.dispose(); spikeMesh.dispose(); spikeMesh = null; }
+  spikeMesh = buildAdornments(lastGeo, current.face,
+    { count: lastCount, outline: lastOutline, ...adorn });
+  group.add(spikeMesh);
+}
+
+function frameObject(factor = 1.25){
+  if (!textMesh) return;
+  const box = new THREE.Box3().setFromObject(group);
+  if (box.isEmpty()) return;
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const vFov = camera.fov * Math.PI/180;
+  const hFov = 2 * Math.atan(Math.tan(vFov/2) * camera.aspect);
+  const dist = (sphere.radius * factor) / Math.sin(Math.min(vFov, hFov)/2);
+  const dir = camera.position.clone().sub(controls.target);
+  if (dir.lengthSq() < 1e-8) dir.set(0, 0.1, 1);
+  dir.normalize();
+  controls.target.set(0, 0, 0);
+  camera.position.copy(controls.target).addScaledVector(dir, dist);
+  controls.update();
+}
+controls.addEventListener('start', () => { userMovedCamera = true; });
+
+/* ============================ 重建 ============================ */
+const diag = document.getElementById('diag');
+// 诊断信息分两段拼：rebuild 产出的基础信息 + 每秒刷新的帧率。
+// 之前直接在 innerHTML 上做正则替换，会一轮轮往上叠，越叠越长。
+let diagBase = '—', fpsText = '';
+function updateDiag(){ diag.innerHTML = diagBase + (fpsText ? '<br><b>' + fpsText + '</b>' : ''); }
+
+function rebuild(){
+  const text = (document.getElementById('txt').value || '').trim() || 'SAKEE';
+  const family = currentFamily;
+  const weight = document.querySelector('#segWeight .on').dataset.v;
+
+  let lf;
+  try { lf = letterformFromCanvas(text, family, weight, style); }
+  catch (e) { fail('字形描边失败', e.message); return; }
+  if (!lf.shapes.length){ diag.textContent = '这个字体没有渲染出可描的轮廓'; return; }
+
+  if (textMesh){ group.remove(textMesh); textMesh.geometry.dispose(); textMesh = null; }
+
+  let geo;
+  try {
+    geo = new THREE.ExtrudeGeometry(lf.shapes, {
+      depth, bevelEnabled: true,
+      bevelThickness: Math.min(depth * 0.25, 0.06),
+      bevelSize, bevelOffset: 0, bevelSegments: 6, curveSegments: 1
+    });
+  } catch (e) {
+    fail('挤出失败（轮廓可能有自交）', e.message + '<br>试试把「加粗」和「尖角」调小。');
+    return;
+  }
+  geo.computeBoundingBox(); geo.center(); geo.computeBoundingBox();
+
+  const size = new THREE.Vector3();
+  geo.boundingBox.getSize(size);
+  lastGeo = geo;
+  lastOutline = lf.outline;
+
+  const baseScale = Math.min(FIT_BOX_W / Math.max(lf.inkW, 1e-3),
+                             FIT_BOX_H / Math.max(lf.inkH, 1e-3));
+  group.userData.baseScale = baseScale;
+  group.scale.setScalar(baseScale);
+  lastCount = Math.max(18, Math.min(110, Math.round(size.x * baseScale / 0.15)));
+
+  textMesh = new THREE.Mesh(geo, [current.face, current.edge]);
+  group.add(textMesh);
+  rebuildSpikes();
+  applyDensity();
+  if (!userMovedCamera) frameObject();
+
+  const st = lf.res.stats;
+  diagBase =
+    `轮廓 <b>${st.loops}</b> 条 · 洞 <b>${st.holes}</b> · 描边 <b>${lf.traceMs.toFixed(0)}ms</b> · ` +
+    `变形 <b>${lf.styleMs.toFixed(1)}ms</b><br>三角面 <b>${(geo.attributes.position.count/3|0).toLocaleString()}</b> · ` +
+    `装饰 <b>${lastCount}</b> 根 · 每字高 <b>${paveDensity}</b> 颗钻`;
+  updateDiag();
+}
+
+/* ============================ 后处理辉光 ============================ */
+try {
+  const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
+    import('three/addons/postprocessing/EffectComposer.js'),
+    import('three/addons/postprocessing/RenderPass.js'),
+    import('three/addons/postprocessing/UnrealBloomPass.js'),
+    import('three/addons/postprocessing/OutputPass.js')
+  ]);
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(960, 540), 0.55, 0.75, 0.72);
+  composer.addPass(bloomPass);
+  composer.addPass(new OutputPass());
+} catch (e) { console.warn('辉光不可用', e); }
+
+/* ============================ UI 装配 ============================ */
+function setSlider(id, vid, val, digits){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = String(val);
+  const out = document.getElementById(vid);
+  if (out) out.textContent = digits === 0 ? String(Math.round(val)) : Number(val).toFixed(digits);
+}
+function bind(id, vid, fn, digits){
+  const el = document.getElementById(id), out = document.getElementById(vid);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    const val = parseFloat(el.value);
+    if (out) out.textContent = digits === 0 ? String(Math.round(val)) : val.toFixed(digits);
+    fn(val);
+  });
+}
+let rebuildQueued = false;
+function queueRebuild(){
+  if (rebuildQueued) return;
+  rebuildQueued = true;
+  requestAnimationFrame(() => { rebuildQueued = false; rebuild(); });
+}
+
+// Tab 切换
+document.querySelectorAll('.tabs button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.pane').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelector(`.pane[data-pane="${b.dataset.tab}"]`).classList.add('on');
+  };
+});
+
+// 字重
+document.querySelectorAll('#segWeight button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('#segWeight button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    rebuild();
+  };
+});
+
+// 气质预设：七个变形参数一起设好，快速切换整体气质
+const STYLE_PRESETS = {
+  '凶悍':     { dilate:0.034, spike:1.60, shear:0.24, arch:0.10, round:0.000, rough:0.000, persp:0.20 },
+  '锋利':     { dilate:0.012, spike:1.05, shear:0.16, arch:0.05, round:0.000, rough:0.000, persp:0.00 },
+  '街头涂鸦': { dilate:0.040, spike:0.90, shear:0.30, arch:0.18, round:0.004, rough:0.004, persp:0.10 },
+  '赛博':     { dilate:0.016, spike:0.40, shear:0.00, arch:0.00, round:0.028, rough:0.000, persp:0.38 },
+  '硬核军事': { dilate:0.046, spike:0.12, shear:0.00, arch:0.00, round:0.000, rough:0.000, persp:0.00 },
+  '液态融化': { dilate:0.050, spike:0.00, shear:0.02, arch:-0.08, round:0.055, rough:0.002, persp:0.00 },
+  '哥特尖塔': { dilate:-0.008, spike:2.00, shear:0.00, arch:0.00, round:0.000, rough:0.000, persp:0.00 },
+  '复古招牌': { dilate:0.026, spike:0.55, shear:0.10, arch:0.22, round:0.014, rough:0.000, persp:0.00 },
+  '石刻':     { dilate:0.022, spike:0.35, shear:0.05, arch:0.04, round:0.010, rough:0.006, persp:0.00 },
+  '风蚀':     { dilate:0.030, spike:0.60, shear:0.03, arch:0.02, round:0.006, rough:0.009, persp:0.00 },
+  '圆润':     { dilate:0.030, spike:0.20, shear:0.06, arch:0.12, round:0.045, rough:0.000, persp:0.00 },
+  '儿童圆胖': { dilate:0.052, spike:0.00, shear:0.00, arch:0.10, round:0.060, rough:0.000, persp:0.00 },
+  '瘦高':     { dilate:-0.004, spike:0.30, shear:0.00, arch:0.00, round:0.020, rough:0.000, persp:-0.25 },
+  '极简':     { dilate:0.000, spike:0.00, shear:0.00, arch:0.00, round:0.006, rough:0.000, persp:0.00 },
+  '干净':     { dilate:0.004, spike:0.00, shear:0.00, arch:0.00, round:0.000, rough:0.000, persp:0.00 },
+  '归零':     { dilate:0.000, spike:0.00, shear:0.00, arch:0.00, round:0.000, rough:0.000, persp:0.00 }
+};
+const STYLE_KEYS = [['g1','vg1','dilate',3],['g2','vg2','spike',2],['g5','vg5','round',3],
+                    ['g6','vg6','rough',4],['g3','vg3','shear',2],['g4','vg4','arch',2],['g7','vg7','persp',2]];
+const chipsStyle = document.getElementById('chipsStyle');
+Object.entries(STYLE_PRESETS).forEach(([label, p], i) => {
+  const b = document.createElement('button');
+  b.textContent = label;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsStyle.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    Object.assign(style, p);
+    STYLE_KEYS.forEach(([id, vid, key, d]) => setSlider(id, vid, p[key], d));
+    queueRebuild();
+  };
+  chipsStyle.appendChild(b);
+});
+
+// 材质
+const chipsMat = document.getElementById('chipsMat');
+Object.entries(MATERIALS).forEach(([k, v], i) => {
+  const b = document.createElement('button');
+  b.textContent = v.label;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsMat.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    applyMaterial(k);
+  };
+  chipsMat.appendChild(b);
+});
+
+// 背景
+const chipsBg = document.getElementById('chipsBg');
+Object.entries(BACKDROPS).forEach(([k, v], i) => {
+  const b = document.createElement('button');
+  b.textContent = v.label;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsBg.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    applyBackdrop(k);
+  };
+  chipsBg.appendChild(b);
+});
+
+// 边缘装饰形态
+const chipsForm = document.getElementById('chipsForm');
+Object.entries(ADORN_FORMS).forEach(([k, f], i) => {
+  const b = document.createElement('button');
+  b.textContent = f.label;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsForm.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    adorn.form = k;
+    rebuildSpikes();
+  };
+  chipsForm.appendChild(b);
+});
+
+// 强调色
+const accentPick = document.getElementById('accentPick'), accentHex = document.getElementById('accentHex');
+function normHex(s){
+  let h = String(s || '').trim().replace(/^#/, '');
+  if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split('').map(c => c + c).join('');
+  return /^[0-9a-fA-F]{6}$/.test(h) ? ('#' + h.toLowerCase()) : null;
+}
+function setColorInputs(hex){
+  accentPick.value = hex;
+  accentHex.value = hex.toUpperCase();
+}
+function commitAccent(hex){
+  const n = normHex(hex);
+  if (!n) return;
+  bgMat.uniforms.uAccent.value.set(n);
+  setColorInputs(n);
+}
+accentPick.addEventListener('input', () => commitAccent(accentPick.value));
+accentHex.addEventListener('change', () => commitAccent(accentHex.value));
+accentHex.addEventListener('blur', () => commitAccent(accentHex.value));
+
+/* ---------- 背景来源：程序化 / 我的图片 ---------- */
+const segBg = document.getElementById('segBg');
+const imgField = document.getElementById('imgField');
+const proceduralOnly = document.getElementById('proceduralOnly');
+const fileImg = document.getElementById('fileImg');
+const imgNote = document.getElementById('imgNote');
+let bgMode = 'procedural';
+
+function setBgMode(m){
+  bgMode = m;
+  bgMesh.visible = (m === 'procedural');
+  imgMesh.visible = (m === 'image');
+  imgField.style.display = (m === 'image') ? 'block' : 'none';
+  proceduralOnly.style.display = (m === 'image') ? 'none' : 'block';
+  [...segBg.children].forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  if (m === 'image' && !imgMat.uniforms.uHas.value){
+    imgNote.textContent = '还没有图片。点上面的按钮，或直接把图片拖到左边预览区。';
+  }
+}
+segBg.querySelectorAll('button').forEach(b => { b.onclick = () => setBgMode(b.dataset.v); });
+
+function setBgImage(file){
+  if (!file) return;
+  if (!/^image\//.test(file.type)){ imgNote.textContent = '这不是图片文件。'; return; }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = THREE.NoColorSpace;   // 着色器里手动做 sRGB→线性
+    tex.needsUpdate = true;
+    imgMat.uniforms.uTex.value = tex;
+    imgMat.uniforms.uHas.value = 1;
+    imgMat.uniforms.uImgAspect.value = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+    imgNote.innerHTML = `<b>${file.name}</b> · ${img.naturalWidth}×${img.naturalHeight}<br>拖动滑块压暗到字体能跳出来为止。`;
+    setBgMode('image');
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => { imgNote.textContent = '图片读取失败，换一张试试（png / jpg / webp）。'; URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+document.getElementById('btnPick').onclick = () => fileImg.click();
+fileImg.addEventListener('change', e => setBgImage(e.target.files && e.target.files[0]));
+
+// 拖拽到预览区 / 也可以整个页面丢进来
+['dragenter','dragover'].forEach(ev => {
+  stageWrap.addEventListener(ev, e => { e.preventDefault(); stageWrap.classList.add('dropping'); });
+  stageWrap.addEventListener('dragleave', () => stageWrap.classList.remove('dropping'));
+});
+stageWrap.addEventListener('drop', e => {
+  e.preventDefault(); stageWrap.classList.remove('dropping');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) setBgImage(f);
+});
+
+bind('i1','vi1', v => { imgMat.uniforms.uDim.value = v; }, 2);
+bind('i2','vi2', v => { imgMat.uniforms.uVig.value = v; }, 2);
+bind('i3','vi3', v => { imgMat.uniforms.uZoom.value = v; }, 2);
+
+/* ---------- 元素开关 ---------- */
+let ringsOn = true, lastRingGain = 0.40;
+function wireSwitch(id, initial, onChange){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (initial) el.classList.add('on'); else el.classList.remove('on');
+  el.onclick = () => {
+    const on = !el.classList.contains('on');
+    el.classList.toggle('on', on);
+    onChange(on);
+  };
+}
+wireSwitch('swSparks', true, on => { sparks.pts.visible = on; });
+wireSwitch('swGround', true, on => { ground.visible = on; });
+wireSwitch('swRings', true, on => {
+  ringsOn = on;
+  bgMat.uniforms.uRingGain.value = on ? lastRingGain : 0;
+});
+wireSwitch('swSpin', false, on => {
+  loopSpin = on; controls.autoRotate = on; controls.autoRotateSpeed = 0.8;
+  const b = document.getElementById('btnSpin'); if (b) b.classList.toggle('on', on);
+});
+
+// 滑块
+bind('g1','vg1', v => { style.dilate = v; queueRebuild(); }, 3);
+bind('g2','vg2', v => { style.spike = v; queueRebuild(); }, 2);
+bind('g5','vg5', v => { style.round = v; queueRebuild(); }, 3);
+bind('g6','vg6', v => { style.rough = v; queueRebuild(); }, 4);
+bind('g3','vg3', v => { style.shear = v; queueRebuild(); }, 2);
+bind('g4','vg4', v => { style.arch = v; queueRebuild(); }, 2);
+bind('g7','vg7', v => { style.persp = v; queueRebuild(); }, 2);
+bind('s1','v1', v => { paveDensity = v; applyDensity(); }, 0);
+bind('s2','v2', v => { if (current.face){ current.face.roughness = v; current.edge.roughness = Math.max(0.02, v*0.5); } }, 2);
+bind('s3','v3', v => { bloomStrength = v; if (bloomPass) bloomPass.strength = v; }, 2);
+bind('s5','v5', v => { depth = v; queueRebuild(); }, 2);
+bind('s6','v6', v => { bevelSize = v; queueRebuild(); }, 3);
+bind('a1','va1', v => { adorn.base = v; rebuildSpikes(); }, 2);
+bind('a2','va2', v => { adorn.jitter = v; rebuildSpikes(); }, 2);
+bind('a3','va3', v => { adorn.lean = v; rebuildSpikes(); }, 2);
+bind('b1','vb1', v => { bgMat.uniforms.uRayGain.value = v; }, 2);
+bind('b2','vb2', v => { lastRingGain = v; if (ringsOn) bgMat.uniforms.uRingGain.value = v; }, 2);
+bind('b3','vb3', v => { bgMat.uniforms.uDotGain.value = v; }, 2);
+
+document.getElementById('pattern').addEventListener('change', e => { adorn.pattern = e.target.value; rebuildSpikes(); });
+document.getElementById('sides').addEventListener('change', e => { adorn.sides = e.target.value; rebuildSpikes(); });
+/* ---------- 字体下拉：系统字体 + 内置街头字体 ---------- */
+const fontSel = document.getElementById('font');
+const fontNote = document.getElementById('fontNote');
+function setWeight(v){
+  document.querySelectorAll('#segWeight button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+}
+(function fillFontSelect(){
+  const addGroup = (label, items, fmt) => {
+    if (!items.length) return;
+    const g = document.createElement('optgroup');
+    g.label = label;
+    items.forEach(it => g.appendChild(new Option(fmt(it), it.value)));
+    fontSel.appendChild(g);
+  };
+  addGroup('系统字体', SYS_FONTS.map(([v, l]) => ({ value: 'sys:' + v, label: l })), i => i.label);
+  addGroup('内置街头字体 · 拉丁',
+    FONTS.filter(f => !f.cjk).map(f => ({ value: 'web:' + f.file, def: f })),
+    i => `${i.def.label}  ·  ${i.def.sizeKB}KB`);
+  addGroup('内置街头字体 · 中文',
+    FONTS.filter(f => f.cjk).map(f => ({ value: 'web:' + f.file, def: f })),
+    i => `${i.def.label}  ·  ${(i.def.sizeKB / 1024).toFixed(1)}MB`);
+  fontSel.value = 'sys:Noto Sans SC';
+})();
+
+fontSel.addEventListener('change', async () => {
+  const v = fontSel.value;
+  if (v.startsWith('sys:')) {
+    currentFamily = v.slice(4);
+    fontNote.textContent = '系统字体，无需加载。';
+    rebuild();
+    return;
+  }
+  const def = FONTS.find(f => 'web:' + f.file === v);
+  if (!def) return;
+  fontSel.disabled = true;
+  fontNote.textContent = `正在加载「${def.label}」…`;
+  try {
+    await ensureWebFont(def);
+    currentFamily = def.family;
+    setWeight('400');       // 显示字体基本只有单字重，用常规避免浏览器伪粗把笔画糊掉
+    fontNote.innerHTML =
+      `<b>${def.label}</b> · ${def.sizeKB >= 1024 ? (def.sizeKB/1024).toFixed(1)+'MB' : def.sizeKB+'KB'} · ${def.license}<br>` +
+      `${def.note}<br><span style="color:#b6bcc6">${def.source}</span>`;
+    rebuild();
+  } catch (e) {
+    fontNote.innerHTML = `<span style="color:#c0392b">加载失败：${e.message}</span><br>换一款试试，或检查网络。`;
+  } finally {
+    fontSel.disabled = false;
+  }
+});
+
+let textTimer = null;
+document.getElementById('txt').addEventListener('input', () => {
+  clearTimeout(textTimer);
+  textTimer = setTimeout(rebuild, 240);
+});
+
+/* ============================ 视角按钮 ============================ */
+const btnSpin = document.getElementById('btnSpin');
+btnSpin.onclick = () => {
+  loopSpin = !loopSpin; controls.autoRotate = loopSpin; controls.autoRotateSpeed = 0.8;
+  btnSpin.classList.toggle('on', loopSpin);
+  const sw = document.getElementById('swSpin'); if (sw) sw.classList.toggle('on', loopSpin);
+};
+document.getElementById('btnReset').onclick = () => { userMovedCamera = false; frameObject(); };
+document.getElementById('btnFull').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else stageWrap.requestFullscreen?.();
+};
+renderer.domElement.addEventListener('dblclick', () => { userMovedCamera = false; frameObject(); });
+setTimeout(() => { const h = document.getElementById('hint'); if (h) h.style.opacity = '0.25'; }, 9000);
+
+/* ============================ 循环视频导出 ============================ */
+const btnExport = document.getElementById('btnExport');
+const recDot = document.getElementById('recDot'), recTxt = document.getElementById('recTxt');
+let exporting = false;
+
+bind('dur','lbDur', v => { loopSeconds = v; if (!exporting) clockTime = 0; }, 1);
+let exportFps = 30, exportBr = 8;
+document.getElementById('fps').addEventListener('input', e => {
+  exportFps = parseFloat(e.target.value);
+  document.getElementById('lbFps').textContent = String(exportFps);
+});
+document.getElementById('br').addEventListener('input', e => {
+  exportBr = parseFloat(e.target.value);
+  document.getElementById('lbBr').textContent = exportBr + ' Mbps';
+});
+document.getElementById('lbDur').textContent = '8.0s';
+document.getElementById('lbFps').textContent = '30';
+document.getElementById('lbBr').textContent = '8 Mbps';
+
+btnExport.onclick = async () => {
+  if (exporting) return;
+  if (typeof MediaRecorder === 'undefined'){
+    fail('这个浏览器不支持录制', 'MediaRecorder 不可用，请换 Chrome / Edge。');
+    return;
+  }
+  exporting = true;
+  btnExport.disabled = true;
+  btnExport.textContent = '录制中…';
+  recDot.classList.add('on');
+
+  // 从循环起点开始，保证录到的正好是一个完整周期
+  clockTime = 0; phase = 0;
+  const stream = renderer.domElement.captureStream(exportFps);
+  const cands = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  const mime = cands.find(m => MediaRecorder.isTypeSupported(m)) || '';
+  let rec;
+  try {
+    rec = new MediaRecorder(stream, { mimeType: mime || undefined, videoBitsPerSecond: exportBr * 1e6 });
+  } catch (e) {
+    fail('录制器初始化失败', e.message); exporting = false;
+    btnExport.disabled = false; btnExport.textContent = '● 导出循环视频';
+    recDot.classList.remove('on');
+    return;
+  }
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: mime || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const name = (document.getElementById('txt').value || 'vj').trim().replace(/\s+/g, '_') || 'vj';
+    a.href = url; a.download = `${name}_${loopSeconds}s.webm`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    exporting = false;
+    btnExport.disabled = false;
+    btnExport.textContent = '● 导出循环视频';
+    recDot.classList.remove('on');
+  };
+  rec.start();
+  const startedAt = performance.now();
+  (function tick(){
+    const el = (performance.now() - startedAt) / 1000;
+    recTxt.textContent = `录制中 ${el.toFixed(1)} / ${loopSeconds.toFixed(1)}s`;
+    if (el >= loopSeconds) { try { rec.stop(); } catch(e){} return; }
+    requestAnimationFrame(tick);
+  })();
+};
+
+/* ============================ 启动 ============================ */
+if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
+sizeToStage();
+applyBackdrop('blood');
+applyMaterial('pave');
+rebuild();
+
+/* ============================ 渲染循环 ============================ */
+let last = performance.now()/1000, fCount = 0, fStart = performance.now();
+const fpsEl = document.createElement('span');   // 帧率显示并入 diag
+const camDir = new THREE.Vector3();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const now = performance.now()/1000;
+  const dt = Math.min(0.05, now - last);
+  last = now;
+  clockTime += dt;
+  phase = (clockTime / loopSeconds) % 1;
+
+  if (objSway){
+    group.rotation.y = Math.sin(phase * TAU) * 0.34;
+    group.rotation.x = Math.sin(phase * TAU * 2) * 0.065 + 0.015;
+    group.position.y = Math.sin(phase * TAU * 3) * 0.05;
+    group.scale.setScalar((group.userData.baseScale || 1) * (1 + Math.sin(phase * TAU * 4) * 0.007));
+  } else {
+    group.rotation.set(0, 0, 0);
+    group.position.y = 0;
+    group.scale.setScalar(group.userData.baseScale || 1);
+  }
+
+  bgMat.uniforms.uPhase.value = phase;
+  camera.getWorldDirection(camDir);
+  bgMat.uniforms.uPar.value.set(camDir.x * 0.045, camDir.y * 0.045);
+  if (current.face) current.face.userData.u.uPhase.value = phase;
+
+  rimL.intensity = 48 + Math.sin(phase * TAU * 5) * 12;
+  rimR.intensity = 38 + Math.sin(phase * TAU * 7) * 10;
+
+  // 火星：位置是相位的确定函数，不积分 —— 保证可复现、可无缝循环
+  const p = sparks.pos, base = sparks.base, off = sparks.off;
+  const Y0 = sparks.Y0, Y1 = sparks.Y1, span = Y1 - Y0;
+  for (let i=0;i<SPARK_N;i++){
+    const local = (phase + off[i]) % 1;
+    const i3 = i*3;
+    p[i3]   = base[i3] + Math.sin((local + off[i]) * TAU) * 0.35;
+    p[i3+1] = Y0 + span * local;
+    p[i3+2] = base[i3+2];
+  }
+  sparks.g.attributes.position.needsUpdate = true;
+
+  controls.update();
+  if (composer) composer.render(); else renderer.render(scene, camera);
+  fCount++;
+
+  if (now - fStart >= 1){
+    fpsText = Math.round(fCount / (now - fStart)) + ' fps';
+    fCount = 0; fStart = now;
+    if (!exporting) updateDiag();
+  }
+}
+animate();
+</script>
+</body>
+</html>

@@ -1,9 +1,10 @@
 /**
- * 边缘装饰：沿字形轮廓在上下边缘批量排布"长出来的东西"。
+ * 边缘装饰：沿字形轮廓批量排布"长出来的东西"。
  *
- * 为什么独立成模块：锥体是最默认的做法，但边缘长什么、怎么排，本身就是字形
- * 设计的一部分（獠牙、碎钻晶簇、刀刃、滴落、铆钉、长针……）。把它做成可切换的，
- * 字形才能真正变得独特。
+ * 两个排布模式：
+ *   · 上下边缘（按 x 分列取最高/最低点）—— 快，但换什么形状都还是"头顶一排刺"
+ *   · 整圈（沿外轮廓等弧长采样，朝外法线生长）—— 这是关键，
+ *     装饰长满整个剪影，观感上和"头顶一排"是完全不同的东西
  *
  * 本模块只算**实例变换**（位置/长度/朝向/粗细），不碰 three ——
  * 几何体由页面按形态构建。这样排布逻辑可以在 Node 里定量验证。
@@ -51,43 +52,95 @@ export const PATTERNS = {
   zigzag: { label: '锯齿',   f: (t, i) => (i % 2) ? 1.00 : 0.46 },
   ramp:   { label: '递增',   f: (t) => 0.22 + 0.78 * t },
   wave:   { label: '波浪',   f: (t) => 0.34 + 0.66 * Math.abs(Math.sin(t * Math.PI * 3)) },
+  pulse:  { label: '脉冲',   f: (t, i) => (i % 5 === 0) ? 1.00 : 0.30 },
   random: { label: '乱序',   f: null }   // 用 rng 生成
 };
 
+function shapeOf(pattern, t, i, rng) {
+  const fn = (PATTERNS[pattern] || PATTERNS.fan).f;
+  return fn ? fn(t, i) : (0.32 + 0.68 * rng());
+}
+
+/** 实例统一带 angleZ（绕 Z 的朝向）。不再用 up 布尔 —— 整圈模式需要任意角度。 */
+function makeInstance(x, y, len, angleZ, rng, tilt) {
+  return {
+    x, y, len, angleZ,
+    spin: rng() * Math.PI * 2,
+    thick: 0.80 + 0.40 * rng(),
+    tilt: tilt || 0
+  };
+}
+
 /**
- * 计算一份装饰排布。
- *
- * @param {object} o
- *   profile  由 profileFromPoints 得到
- *   sides    'top' | 'bottom' | 'both'
- *   pattern  PATTERNS 的键
- *   base     基准长度（物体单位，字高=1）
- *   jitter   长度随机扰动的比例
- *   lean     左右倾斜量（正的往外张）
- *   seed     随机种子 —— 同样的种子必须给同样的结果
- * @returns {Array<{x,y,len,up,spin,thick,tilt}>}
+ * 上下边缘排布。
+ *   profile / sides('top'|'bottom'|'both') / pattern / base / jitter / lean / seed
+ * @returns {Array<{x,y,len,angleZ,spin,thick,tilt}>}
  */
 export function layoutAdornments(o) {
   const { profile, sides = 'both', pattern = 'fan', base = 0.34, jitter = 0.35, lean = 0, seed = 1337 } = o;
   if (!profile) return [];
   const rng = mulberry32(seed);
   const { minX, binW, bins, topY, botY } = profile;
-  const patternFn = (PATTERNS[pattern] || PATTERNS.fan).f;
   const out = [];
 
   for (let b = 0; b < bins; b++) {
     const t = (b + 0.5) / bins;
-    const shape = patternFn ? patternFn(t, b) : (0.32 + 0.68 * rng());
-    const len = Math.max(0.02, base * shape * (1 + (rng() * 2 - 1) * jitter));
+    const len = Math.max(0.02, base * shapeOf(pattern, t, b, rng) * (1 + (rng() * 2 - 1) * jitter));
     const x = minX + (b + 0.5) * binW;
     const tilt = lean * (t - 0.5) * 2;
 
     if ((sides === 'top' || sides === 'both') && Number.isFinite(topY[b])) {
-      out.push({ x, y: topY[b] + len * 0.5, len, up: true, spin: rng() * Math.PI * 2, thick: 0.80 + 0.40 * rng(), tilt });
+      out.push(makeInstance(x, topY[b] + len * 0.5, len, 0, rng, tilt));
     }
     if ((sides === 'bottom' || sides === 'both') && Number.isFinite(botY[b])) {
-      out.push({ x, y: botY[b] - len * 0.5, len, up: false, spin: rng() * Math.PI * 2, thick: 0.80 + 0.40 * rng(), tilt: -tilt });
+      out.push(makeInstance(x, botY[b] - len * 0.5, len, Math.PI, rng, -tilt));
     }
+  }
+  return out;
+}
+
+/**
+ * 整圈排布：沿外轮廓等弧长采样，朝外法线生长。
+ *
+ * 前提：传入的环必须是**逆时针**（外轮廓）。经过 stylizeRing 的环都满足，
+ * 所以外法线就是 (dy, −dx)。
+ *
+ * @param {Array<{x:number,y:number}>} ring 逆时针的外轮廓
+ * @returns {Array<{x,y,len,angleZ,spin,thick,tilt}>}
+ */
+export function outlinePlacements(ring, o) {
+  const { spacing = 0.13, pattern = 'fan', base = 0.34, jitter = 0.35, seed = 1337 } = o;
+  const n = ring ? ring.length : 0;
+  if (n < 3) return [];
+
+  const cum = [0];
+  for (let i = 0; i < n; i++) {
+    const a = ring[i], b = ring[(i + 1) % n];
+    cum.push(cum[i] + Math.hypot(b.x - a.x, b.y - a.y));
+  }
+  const total = cum[n];
+  if (!(total > 1e-6)) return [];
+  const count = Math.max(6, Math.round(total / Math.max(spacing, 1e-3)));
+
+  const rng = mulberry32(seed);
+  const out = [];
+  for (let k = 0; k < count; k++) {
+    const s = ((k + 0.5) / count) * total;
+    let i = 0;
+    while (i < n - 1 && cum[i + 1] < s) i++;
+    const a = ring[i], b = ring[(i + 1) % n];
+    const seg = Math.max(cum[i + 1] - cum[i], 1e-9);
+    const t = Math.min(1, Math.max(0, (s - cum[i]) / seg));
+    const px = a.x + (b.x - a.x) * t;
+    const py = a.y + (b.y - a.y) * t;
+    const ex = (b.x - a.x) / seg, ey = (b.y - a.y) / seg;
+    const nx = ey, ny = -ex;                       // 逆时针环的外法线
+
+    const u = (k + 0.5) / count;
+    const len = Math.max(0.02, base * shapeOf(pattern, u, k, rng) * (1 + (rng() * 2 - 1) * jitter));
+    // 把几何体自身的 +Y（生长轴）转到外法线方向
+    const angleZ = Math.atan2(ny, nx) - Math.PI / 2;
+    out.push(makeInstance(px + nx * len * 0.5, py + ny * len * 0.5, len, angleZ, rng, 0));
   }
   return out;
 }

@@ -172,11 +172,48 @@ const onlyTop = layoutAdornments({ profile: prof, sides: 'top', pattern: 'fan', 
 const both = layoutAdornments({ profile: prof, sides: 'both', pattern: 'fan', base: 0.34, seed: 7 });
 console.log(`  单边 vs 双边 : top=${onlyTop.length}  both=${both.length}`);
 if (!(both.length > onlyTop.length)) fail('双边排布的根数没有多于单边');
-if (onlyTop.some(x => !x.up)) fail('sides=top 时出现了朝下的装饰');
+if (onlyTop.some(x => Math.abs(x.angleZ) > 1e-9)) fail('sides=top 时出现了非朝上的装饰');
+
+/* ---------- 整圈排布：生长方向必须背离质心 ---------- */
+console.log('\n整圈排布（沿外轮廓等弧长，朝外法线生长）');
+const { outlinePlacements } = await import('../src/edge-adornments.js');
+
+// 先拿理想逆时针正方形单独验证法线，避免被真实轮廓的复杂度掩盖
+const sq = [{x:-1,y:-1},{x:1,y:-1},{x:1,y:1},{x:-1,y:1}];
+const sqPl = outlinePlacements(sq, { spacing: 0.4, base: 0.3, pattern: 'fan', seed: 3 });
+let outward = 0;
+for (const p of sqPl) {
+  const gx = Math.cos(p.angleZ + Math.PI/2), gy = Math.sin(p.angleZ + Math.PI/2);  // 几何体 +Y 转到世界后的生长方向
+  const rl = Math.hypot(p.x, p.y) || 1;                                            // 质心在原点
+  if ((p.x/rl)*gx + (p.y/rl)*gy > 0.2) outward++;
+}
+console.log(`  正方形  : 根数 ${sqPl.length}，生长方向背离质心的 ${outward} / ${sqPl.length}`);
+if (outward !== sqPl.length) fail('整圈排布的法线算错了（有装饰朝字形内部生长）');
+
+const ringPl  = outlinePlacements(R[0].outer, { spacing: 0.13, base: 0.34, pattern: 'wave', seed: 11 });
+const ringPl2 = outlinePlacements(R[0].outer, { spacing: 0.13, base: 0.34, pattern: 'wave', seed: 11 });
+const lens2 = ringPl.map(x => x.len);
+console.log(`  真实轮廓: 根数 ${ringPl.length}  长度 ${Math.min(...lens2).toFixed(3)}~${Math.max(...lens2).toFixed(3)}  可复现=${JSON.stringify(ringPl) === JSON.stringify(ringPl2)}`);
+if (!(ringPl.length > 0)) fail('整圈排布没有产出任何装饰');
+if (JSON.stringify(ringPl) !== JSON.stringify(ringPl2)) fail('整圈排布不可复现');
+if (ringPl.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.angleZ))) fail('整圈排布出现非法值');
+if (lens2.some(l => !(l > 0 && l < 1.2))) fail('整圈排布长度超出合理范围');
+
+let cx2 = 0, cy2 = 0;
+for (const p of R[0].outer) { cx2 += p.x; cy2 += p.y; }
+cx2 /= R[0].outer.length; cy2 /= R[0].outer.length;
+let out2 = 0;
+for (const p of ringPl) {
+  const gx = Math.cos(p.angleZ + Math.PI/2), gy = Math.sin(p.angleZ + Math.PI/2);
+  const rl = Math.hypot(p.x - cx2, p.y - cy2) || 1;
+  if (((p.x-cx2)/rl)*gx + ((p.y-cy2)/rl)*gy > 0) out2++;
+}
+console.log(`  真实轮廓: 背离质心 ${out2} / ${ringPl.length}`);
+if (out2 < ringPl.length * 0.9) fail('真实轮廓上有相当一部分装饰朝内生长');
 
 console.log('------------------------------------------------------------------------------------------');
 if (failures === 0) {
-  console.log('全部通过：法线方向、斜接、绕向、面积守恒、圆角、毛边、透视、装饰排布');
+  console.log('全部通过：法线方向、斜接、绕向、面积守恒、圆角、毛边、透视、装饰排布、整圈法线');
 } else {
   console.log(`${failures} 项未通过`);
   process.exit(1);
