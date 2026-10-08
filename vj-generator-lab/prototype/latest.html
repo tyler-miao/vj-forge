@@ -317,7 +317,8 @@
               <option value="random">乱序</option>
             </select>
             <select id="sides">
-              <option value="both">上下都有</option>`n            <option value="outline">整圈（沿轮廓生长）</option>
+              <option value="both">上下都有</option>
+              <option value="outline">整圈（沿轮廓生长）</option>
               <option value="top">只在上面</option>
               <option value="bottom">只在下面</option>
             </select>
@@ -327,6 +328,19 @@
             <div class="slider"><span class="k"><span>长短随机</span><b id="va2">0.35</b></span><input type="range" id="a2" min="0" max="0.9" step="0.01" value="0.35"></div>
             <div class="slider"><span class="k"><span>外张</span><b id="va3">0.55</b></span><input type="range" id="a3" min="-1.2" max="1.2" step="0.01" value="0.55"></div>
           </div>
+        </div>
+
+        <div class="field">
+          <label>缠绕</label>
+          <div class="chips" id="chipsStrand"></div>
+          <div class="note">和上面的"边缘装饰"是两回事：装饰是往外长，缠绕是沿字形轮廓螺旋包裹。</div>
+        </div>
+        <div class="field" id="strandOpts" style="display:none">
+          <div class="slider"><span class="k"><span>圈数</span><b id="vs1">8</b></span><input type="range" id="st1" min="2" max="26" step="1" value="8"></div>
+          <div class="slider"><span class="k"><span>粗细</span><b id="vs2">1.00</b></span><input type="range" id="st2" min="0.4" max="2.4" step="0.05" value="1"></div>
+          <div class="slider"><span class="k"><span>包裹松紧</span><b id="vs3">0.030</b></span><input type="range" id="st3" min="0.005" max="0.075" step="0.001" value="0.030"></div>
+          <div class="slider"><span class="k"><span>前后摆动</span><b id="vs4">0.055</b></span><input type="range" id="st4" min="0" max="0.18" step="0.005" value="0.055"></div>
+          <div class="switch"><span>叶子</span><button id="swLeaves" class="on"></button></div>
         </div>
       </div>
 
@@ -808,7 +822,13 @@ function makeSurface(cfg){
     uGlintColor:{value: new THREE.Color(cfg.pave ? (cfg.pave.glintColor || 0xfff6e8) : 0xffffff)},
     uCrackScale:{value:6},
     uCrack:{value: cfg.cracks ? cfg.cracks.intensity : 0},
-    uCrackColor:{value: new THREE.Color(cfg.cracks ? cfg.cracks.color : 0xff4a12)}
+    uCrackColor:{value: new THREE.Color(cfg.cracks ? cfg.cracks.color : 0xff4a12)},
+    // 程序化自然材质：0=无 1=木头 2=石头（多尺度斑驳，也能当锈铁/青铜用）
+    uSurf:{value: cfg.surf ? cfg.surf.mode : 0},
+    uSurfA:{value: new THREE.Color(cfg.surf ? cfg.surf.a : 0xffffff)},
+    uSurfB:{value: new THREE.Color(cfg.surf ? cfg.surf.b : 0xffffff)},
+    uSurfScale:{value: cfg.surf ? cfg.surf.scale : 2},
+    uSurfRough:{value: cfg.surf ? cfg.surf.rough : 0.8}
   };
   mat.userData.u = u;
   mat.onBeforeCompile = (shader) => {
@@ -826,8 +846,53 @@ function makeSurface(cfg){
       'varying vec3 vObjPos;\n' +
       'uniform float uPhase, uPaveScale, uPaveHeight, uPaveJitter, uPaveSize, uGlint;\n' +
       'uniform vec3 uGlintColor;\nuniform float uCrackScale, uCrack;\nuniform vec3 uCrackColor;\n' +
+      'uniform float uSurf, uSurfScale, uSurfRough;\nuniform vec3 uSurfA, uSurfB;\n' +
       'float paveHash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }\n' +
+      // 三维值噪声。木纹和石头斑驳都需要，且必须三维 —— 只用平面噪声的话
+      // 挤出侧壁会是纯粹的竖条纹，一眼假。
+      'float surfHash(vec3 p){ p = fract(p*0.3183099 + vec3(0.71,0.113,0.419)); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }\n' +
+      'float vnoise(vec3 x){\n' +
+      '  vec3 i = floor(x), f = fract(x);\n' +
+      '  f = f*f*(3.0-2.0*f);\n' +
+      '  return mix(mix(mix(surfHash(i+vec3(0,0,0)), surfHash(i+vec3(1,0,0)), f.x),\n' +
+      '                 mix(surfHash(i+vec3(0,1,0)), surfHash(i+vec3(1,1,0)), f.x), f.y),\n' +
+      '             mix(mix(surfHash(i+vec3(0,0,1)), surfHash(i+vec3(1,0,1)), f.x),\n' +
+      '                 mix(surfHash(i+vec3(0,1,1)), surfHash(i+vec3(1,1,1)), f.x), f.y), f.z);\n' +
+      '}\n' +
       shader.fragmentShader;
+
+    // 自然材质：在漫反射定下来之后改写颜色
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      `#include <map_fragment>
+       if (uSurf > 0.5) {
+         vec3 sp = vObjPos * uSurfScale;
+         float n1 = vnoise(sp);
+         float n2 = vnoise(sp * 3.1);
+         float n3 = vnoise(sp * 9.7);
+         if (uSurf < 1.5) {
+           // 木头：噪声把年轮推歪，年轮再加一层细纹 —— 太规则的同心圆像塑料
+           float warp = (n1 - 0.5) * 2.6 + (n2 - 0.5) * 1.0;
+           float rings = sin((sp.y * 1.15 + sp.x * 0.35 + sp.z * 1.9 + warp) * 6.2831853) * 0.5 + 0.5;
+           rings = pow(rings, 1.7);
+           diffuseColor.rgb = mix(uSurfA, uSurfB, clamp(rings * 0.82 + n3 * 0.28, 0.0, 1.0));
+         } else {
+           // 石头：多尺度斑驳 + 细暗缝
+           float m = n1 * 0.55 + n2 * 0.30 + n3 * 0.15;
+           vec3 stone = mix(uSurfA, uSurfB, smoothstep(0.24, 0.80, m));
+           float fissure = 1.0 - smoothstep(0.0, 0.055, abs(n2 - 0.5));
+           stone *= 1.0 - fissure * 0.5;
+           diffuseColor.rgb = stone;
+         }
+       }`
+    );
+
+    // 自然材质的粗糙度由材质决定，不受滑块影响
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <roughnessmap_fragment>',
+      `#include <roughnessmap_fragment>
+       if (uSurf > 0.5) roughnessFactor = uSurfRough;`
+    );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <normal_fragment_maps>',
       `#include <normal_fragment_maps>
@@ -895,7 +960,33 @@ const MATERIALS = {
            clearcoat:1.0, clearcoatRoughness:0.05,
            cracks:{ color:0xff2fd0, intensity:2.8 },
            pave:{ height:0.16, jitter:0.6, size:0.4, glint:0.7, glintColor:0xff9ae8 } },
-    edge:{ color:0x120a1c, metalness:1.0, roughness:0.12, env:'dark', envMapIntensity:1.4 } }
+    edge:{ color:0x120a1c, metalness:1.0, roughness:0.12, env:'dark', envMapIntensity:1.4 } },
+
+  /* ---- 自然材质：颜色和粗糙度来自程序化噪声，不依赖任何贴图文件 ---- */
+  wood: { label:'木刻', bloom:0.26, lit:[0xff8a4a,0xffb070], spark:0xffc890,
+    face:{ color:0xffffff, metalness:0.0, roughness:0.62, env:'warm', envMapIntensity:0.55,
+           clearcoat:0.30, clearcoatRoughness:0.45,
+           surf:{ mode:1, scale:2.1, a:0x2e1a0c, b:0xa87244, rough:0.62 } },
+    edge:{ color:0xffffff, metalness:0.0, roughness:0.75, env:'warm', envMapIntensity:0.35,
+           surf:{ mode:1, scale:3.6, a:0x1d1007, b:0x8a5a30, rough:0.76 } } },
+
+  stone: { label:'石刻', bloom:0.30, lit:[0xc8c8d0,0x8a8a96], spark:0xd8d8e0,
+    face:{ color:0xffffff, metalness:0.0, roughness:0.88, env:'studio', envMapIntensity:0.42,
+           surf:{ mode:2, scale:2.6, a:0x243036, b:0x9aa2a8, rough:0.88 } },
+    edge:{ color:0xffffff, metalness:0.0, roughness:0.92, env:'studio', envMapIntensity:0.30,
+           surf:{ mode:2, scale:5.2, a:0x1a2226, b:0x7d858b, rough:0.92 } } },
+
+  rust: { label:'锈铁', bloom:0.42, lit:[0xff7a30,0xffa050], spark:0xff9a50,
+    face:{ color:0xffffff, metalness:0.55, roughness:0.80, env:'dark', envMapIntensity:0.85,
+           surf:{ mode:2, scale:3.4, a:0x3a1a0c, b:0xa8562a, rough:0.80 } },
+    edge:{ color:0xffffff, metalness:0.85, roughness:0.66, env:'dark', envMapIntensity:1.0,
+           surf:{ mode:2, scale:6.0, a:0x2a1208, b:0x8a4520, rough:0.66 } } },
+
+  bronze: { label:'青铜', bloom:0.34, lit:[0xffb040,0xd08030], spark:0xffd090,
+    face:{ color:0xffffff, metalness:0.95, roughness:0.42, env:'warm', envMapIntensity:1.5,
+           surf:{ mode:2, scale:3.0, a:0x2f4a3a, b:0xb08a3c, rough:0.42 } },
+    edge:{ color:0xffffff, metalness:1.0, roughness:0.30, env:'warm', envMapIntensity:1.7,
+           surf:{ mode:2, scale:5.5, a:0x22382c, b:0x9a7a34, rough:0.30 } } }
 };
 
 const BACKDROPS = {
@@ -1028,7 +1119,7 @@ function letterformFromCanvas(text, family, weight, style){
   for (const g of styled) for (const ring of [g.outer, ...g.holes]) for (const p of ring){
     if(p.x<mnx)mnx=p.x; if(p.x>mxx)mxx=p.x; if(p.y<mny)mny=p.y; if(p.y>mxy)mxy=p.y;
   }
-  if (!isFinite(mnx)) return { shapes:[], res, traceMs, styleMs, canvasW:W, canvasH:H, inkW:1, inkH:1, outline:null };
+  if (!isFinite(mnx)) return { shapes:[], res, traceMs, styleMs, canvasW:W, canvasH:H, inkW:1, inkH:1, outline:null, outlines:[] };
   const ccx=(mnx+mxx)/2, ccy=(mny+mxy)/2;
   const shapes = styled.map(g => {
     const sh = new THREE.Shape(g.outer.map(p => new THREE.Vector2(p.x-ccx, p.y-ccy)));
@@ -1036,18 +1127,23 @@ function letterformFromCanvas(text, family, weight, style){
     return sh;
   });
 
-  // 给"整圈"装饰用：取面积最大的那条外轮廓（也就是主体剪影）
+  // 外轮廓（已居中）。两个用途：
+  //   outline  —— 面积最大的那条，给"整圈"装饰用（代表主体剪影）
+  //   outlines —— 全部，给"缠绕"用（每一块字形都要被藤蔓绕到）
+  const outlines = [];
   let outline = null, bestArea = -1;
   for (const g of styled){
     let a = 0;
     const r = g.outer;
     for (let i=0,n=r.length;i<n;i++){ const p=r[i], q=r[(i+1)%n]; a += p.x*q.y - q.x*p.y; }
     a = Math.abs(a/2);
-    if (a > bestArea){ bestArea = a; outline = r; }
+    if (a < 1e-4) continue;
+    const centred = r.map(p => ({ x: p.x - ccx, y: p.y - ccy }));
+    outlines.push(centred);
+    if (a > bestArea){ bestArea = a; outline = centred; }
   }
-  if (outline) outline = outline.map(p => ({ x: p.x - ccx, y: p.y - ccy }));
 
-  return { shapes, res, traceMs, styleMs, canvasW:W, canvasH:H, outline,
+  return { shapes, res, traceMs, styleMs, canvasW:W, canvasH:H, outline, outlines,
            inkW: Math.max(mxx-mnx, 1e-3), inkH: Math.max(mxy-mny, 1e-3) };
 }
 
@@ -1096,17 +1192,94 @@ function buildAdornments(geo, material, opts){
   return mesh;
 }
 
+/* ============================ 缠绕 ============================
+   和边缘装饰是两类东西：装饰是"往外长"，缠绕是**沿着字形轮廓螺旋包裹**。
+   做法是把轮廓点当成一条路径，沿路径前进的同时让管子绕轮廓法线转圈 ——
+   数学上就是一条套在字形边缘上的螺旋线，再扫成管道。
+   圈数取整数，路径才能闭合成环，接缝处不会有断口。 */
+const STRANDS = {
+  none:  { label:'不缠' },
+  vine:  { label:'藤蔓', color:0x51682f, radius:0.030, rough:0.86, metal:0.0, leaves:true,  twist:1.0 },
+  rope:  { label:'麻绳', color:0xb08a52, radius:0.033, rough:0.95, metal:0.0, leaves:false, twist:5.0 },
+  wire:  { label:'铁丝', color:0x9aa2ac, radius:0.014, rough:0.34, metal:1.0, leaves:false, twist:1.0 },
+  chain: { label:'锁链', color:0xc4c9d2, radius:0.026, rough:0.28, metal:1.0, leaves:false, twist:9.0 }
+};
+
+
+/** 沿所有外轮廓生成缠绕管 + 可选叶片 */
+function buildStrands(outlines, mat, opts, seed){
+  const holder = new THREE.Group();
+  const rng = EDGE.mulberry32(seed || 7);
+  const leafPts = [];
+  const pathOpts = { turns: opts.turns, amp: opts.amp, depth: opts.depth };
+
+  for (const ring of outlines){
+    const raw = EDGE.strandPath(ring, pathOpts);
+    const pts = raw && raw.map(q => new THREE.Vector3(q.x, q.y, q.z));
+    if (!pts || pts.length < 12) continue;
+    const curve = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.5);
+    const geo = new THREE.TubeGeometry(curve, pts.length, opts.radius, 8, true);
+    const mesh = new THREE.Mesh(geo, mat);
+    holder.add(mesh);
+
+    if (opts.leaves){
+      const count = Math.max(5, Math.round(pts.length / 16));
+      for (let i = 0; i < count; i++){
+        const u = (i + 0.5) / count;
+        const p = curve.getPointAt(u);
+        const tan = curve.getTangentAt(u);
+        // 叶片朝轮廓外侧长，不要全部冲着画面
+        const rad = new THREE.Vector3(p.x, p.y, 0).normalize();
+        leafPts.push({ p, tan, rad, s: 0.6 + rng() * 0.9, spin: rng() * Math.PI * 2 });
+      }
+    }
+  }
+
+  if (leafPts.length){
+    // 注意：不要走 normalizeUnitHeight —— 那会把叶片归一化到"高度 1"，
+    // 也就是跟整个字一样高。叶片就该是压扁的小球，尺寸直接用几何体本身定。
+    const lg = new THREE.SphereGeometry(0.055, 8, 6);
+    lg.scale(0.50, 0.20, 1.05);                    // 约 x0.055 y0.022 z0.115
+    const leafMat = new THREE.MeshStandardMaterial({
+      color: 0x6d8a3a, roughness: 0.78, metalness: 0.0
+    });
+    const lm = new THREE.InstancedMesh(lg, leafMat, leafPts.length);
+    lm.frustumCulled = false;
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+    const tq = new THREE.Quaternion(), sq = new THREE.Quaternion();
+    const up = new THREE.Vector3(0,1,0), zAx = new THREE.Vector3(0,0,1);
+    const v = new THREE.Vector3(), s = new THREE.Vector3();
+    leafPts.forEach((L, i) => {
+      // 先把叶片的 +Y 对齐到轮廓外法线，再绕它随机转，最后稍微偏离一点避免死板
+      const ang = Math.atan2(L.rad.y, L.rad.x) - Math.PI/2;
+      q.setFromAxisAngle(zAx, ang + (L.spin - Math.PI) * 0.25);
+      tq.setFromAxisAngle(up, L.spin); q.multiply(tq);
+      sq.setFromAxisAngle(zAx, (rng() - 0.5) * 0.9); q.multiply(sq);
+      v.copy(L.p);
+      s.set(L.s, L.s, L.s);
+      m.compose(v, q, s);
+      lm.setMatrixAt(i, m);
+    });
+    lm.instanceMatrix.needsUpdate = true;
+    holder.add(lm);
+  }
+  return holder;
+}
+
 /* ============================ 状态 ============================ */
 const group = new THREE.Group();
 scene.add(group);
 let current = { face:null, edge:null, matKey:null };
-let textMesh = null, spikeMesh = null, lastGeo = null, lastCount = 24, lastOutline = null;
+let textMesh = null, spikeMesh = null, strandMesh = null, lastGeo = null, lastCount = 24,
+    lastOutline = null, lastOutlines = [];
 let paveDensity = 22, depth = 0.22, bevelSize = 0.022, bloomStrength = 0.55;
 let matKey = 'pave', bgKey = 'blood';
 let loopSpin = false, objSway = true;
 
 const style = { dilate:0.030, spike:1.20, shear:0.14, arch:0.08, round:0.000, rough:0.000, persp:0.10, seed:1337 };
 const adorn = { form:'cone', pattern:'fan', sides:'both', base:0.34, jitter:0.35, lean:0.55, spacing:0.13, seed:20261007 };
+// 缠绕：turns 必须整数圈，路径才能闭合
+const strand = { kind:'none', turns:8, radius:0.030, amp:0.030, depth:0.055, leaves:true, seed:99 };
 
 document.getElementById('loading').style.display = 'none';
 
@@ -1148,6 +1321,20 @@ function applyBackdrop(key){
   rimL.color.setHex(b.lit[0]);
   rimR.color.setHex(b.lit[1]);
   sparks.m.uniforms.uColor.value.setHex(b.spark);
+}
+
+function rebuildStrands(){
+  if (strandMesh){ group.remove(strandMesh); strandMesh.traverse(o => { if (o.geometry) o.geometry.dispose(); }); strandMesh = null; }
+  const def = STRANDS[strand.kind];
+  if (!def || strand.kind === 'none' || !lastOutlines.length) return;
+  const mat = new THREE.MeshStandardMaterial({
+    color: def.color, roughness: def.rough, metalness: def.metal
+  });
+  strandMesh = buildStrands(lastOutlines, mat,
+    { turns: strand.turns, radius: strand.radius * def.twist, amp: strand.amp,
+      depth: strand.depth, leaves: strand.leaves && def.leaves },
+    strand.seed);
+  group.add(strandMesh);
 }
 
 function applyDensity(){
@@ -1218,6 +1405,7 @@ function rebuild(){
   geo.boundingBox.getSize(size);
   lastGeo = geo;
   lastOutline = lf.outline;
+  lastOutlines = lf.outlines || [];
 
   const baseScale = Math.min(FIT_BOX_W / Math.max(lf.inkW, 1e-3),
                              FIT_BOX_H / Math.max(lf.inkH, 1e-3));
@@ -1228,6 +1416,7 @@ function rebuild(){
   textMesh = new THREE.Mesh(geo, [current.face, current.edge]);
   group.add(textMesh);
   rebuildSpikes();
+  rebuildStrands();
   applyDensity();
   if (!userMovedCamera) frameObject();
 
@@ -1375,6 +1564,31 @@ Object.entries(ADORN_FORMS).forEach(([k, f], i) => {
   };
   chipsForm.appendChild(b);
 });
+
+// 缠绕
+const chipsStrand = document.getElementById('chipsStrand');
+const strandOpts = document.getElementById('strandOpts');
+Object.entries(STRANDS).forEach(([k, v], i) => {
+  const b = document.createElement('button');
+  b.textContent = v.label;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsStrand.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    strand.kind = k;
+    const def = STRANDS[k];
+    // 换种类时把粗细调到该种类的合理默认，不然铁丝和麻绳共用同一个粗细很奇怪
+    if (def && def.radius){ strand.radius = def.radius; setSlider('st2','vs2', 1, 2); }
+    strandOpts.style.display = (k === 'none') ? 'none' : 'block';
+    rebuildStrands();
+  };
+  chipsStrand.appendChild(b);
+});
+bind('st1','vs1', v => { strand.turns = v; rebuildStrands(); }, 0);
+bind('st2','vs2', v => { strand.radius = (STRANDS[strand.kind]?.radius || 0.03) * v; rebuildStrands(); }, 2);
+bind('st3','vs3', v => { strand.amp = v; rebuildStrands(); }, 3);
+bind('st4','vs4', v => { strand.depth = v; rebuildStrands(); }, 3);
+wireSwitch('swLeaves', true, on => { strand.leaves = on; rebuildStrands(); });
 
 // 强调色
 const accentPick = document.getElementById('accentPick'), accentHex = document.getElementById('accentHex');

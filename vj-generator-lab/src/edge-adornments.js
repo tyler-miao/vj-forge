@@ -155,3 +155,77 @@ export function normalizeUnitHeight(geometry) {
   geometry.computeVertexNormals();
   return geometry;
 }
+
+/**
+ * 缠绕路径：把一条闭合外轮廓变成一条绕它螺旋包裹的曲线。
+ *
+ * 思路：沿轮廓前进的同时，让点绕轮廓的**外法线**转圈 ——
+ * 数学上就是一条套在字形边缘上的螺旋线，扫成管道就是藤蔓／绳子／铁丝。
+ *
+ * 两个关键点：
+ *   1. `turns` 取整。非整数的话路径首尾接不上，管道会有断口。
+ *   2. 采样按**弧长**等分，不按顶点序号。轮廓点疏密不均，
+ *      按序号采样会让密集处线圈挤成一团。
+ *   3. 法线要在相邻两条边之间**平滑过渡**。直接用当前边的法线，
+ *      在直角处会从 (0,−1) 突跳到 (−1,0)，螺旋线在角点被甩出去 ——
+ *      实测首尾间距会因此从 0.067 涨到 0.127，闭合环上出现扭结。
+ *
+ * @param {Array<{x:number,y:number}>} ring 逆时针外轮廓
+ * @param {{turns:number, amp:number, depth:number, samples?:number}} o
+ * @returns {Array<{x:number,y:number,z:number}>|null} 闭合路径点
+ */
+export function strandPath(ring, o) {
+  const n = ring ? ring.length : 0;
+  if (n < 3) return null;
+  const cum = [0];
+  for (let i = 0; i < n; i++) {
+    const a = ring[i], b = ring[(i + 1) % n];
+    cum.push(cum[i] + Math.hypot(b.x - a.x, b.y - a.y));
+  }
+  const total = cum[n];
+  if (!(total > 1e-5)) return null;
+
+  // 预先算出每条边的单位方向和外法线
+  const ex = new Array(n), ey = new Array(n), nxn = new Array(n), nyn = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = ring[i], b = ring[(i + 1) % n];
+    const len = Math.max(Math.hypot(b.x - a.x, b.y - a.y), 1e-9);
+    ex[i] = (b.x - a.x) / len;
+    ey[i] = (b.y - a.y) / len;
+    nxn[i] = ey[i];          // 逆时针轮廓的外法线
+    nyn[i] = -ex[i];
+  }
+
+  const turns = Math.max(1, Math.round(o.turns ?? 8));
+  const samples = o.samples ?? Math.max(48, Math.min(900, Math.round(turns * 56)));
+  const amp = o.amp ?? 0.03;
+  const depth = o.depth ?? 0.055;
+
+  const out = [];
+  for (let k = 0; k < samples; k++) {
+    const s = (k / samples) * total;
+    let i = 0;
+    while (i < n - 1 && cum[i + 1] < s) i++;
+    const a = ring[i], b = ring[(i + 1) % n];
+    const seg = Math.max(cum[i + 1] - cum[i], 1e-9);
+    const t = Math.min(1, Math.max(0, (s - cum[i]) / seg));
+    const px = a.x + (b.x - a.x) * t;
+    const py = a.y + (b.y - a.y) * t;
+
+    // 法线在「本条边」和「下一条边」之间按 smoothstep 过渡，消除角点跳变
+    const j = (i + 1) % n;
+    const w = t * t * (3 - 2 * t);
+    let nx = nxn[i] * (1 - w) + nxn[j] * w;
+    let ny = nyn[i] * (1 - w) + nyn[j] * w;
+    const nl = Math.hypot(nx, ny);
+    if (nl > 1e-6) { nx /= nl; ny /= nl; } else { nx = nxn[i]; ny = nyn[i]; }
+
+    const th = (k / samples) * Math.PI * 2 * turns;
+    out.push({
+      x: px + nx * amp * Math.cos(th),
+      y: py + ny * amp * Math.cos(th),
+      z: depth * Math.sin(th)
+    });
+  }
+  return out;
+}

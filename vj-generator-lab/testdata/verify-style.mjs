@@ -211,9 +211,39 @@ for (const p of ringPl) {
 console.log(`  真实轮廓: 背离质心 ${out2} / ${ringPl.length}`);
 if (out2 < ringPl.length * 0.9) fail('真实轮廓上有相当一部分装饰朝内生长');
 
+/* ---------- 缠绕路径 ---------- */
+console.log('\n缠绕路径（模块：edge-adornments.strandPath）');
+const { strandPath } = await import('../src/edge-adornments.js');
+
+const sqRing = [{x:-1,y:-1},{x:1,y:-1},{x:1,y:1},{x:-1,y:1}];
+for (const turns of [3, 8, 17]) {
+  const path = strandPath(sqRing, { turns, amp: 0.05, depth: 0.08, samples: turns * 40 });
+  const zs = path.map(p => p.z);
+  const zMax = Math.max(...zs.map(Math.abs));
+  // 闭合性：最后一点与第一点应当几乎重合（turns 取整才会这样）
+  const a = path[0], b = path[path.length - 1];
+  const wrapGap = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+  // 每个点都应落在轮廓附近的一圈里（离轮廓不超过 amp + 一点点）
+  let maxDev = 0;
+  for (const p of path) {
+    const d = Math.max(Math.abs(p.x), Math.abs(p.y));   // 正方形边界到原点用切比雪夫距离
+    maxDev = Math.max(maxDev, Math.abs(d - 1));
+  }
+  console.log(`  圈数 ${String(turns).padStart(2)} : 点数 ${String(path.length).padStart(3)}  Z 振幅 ${zMax.toFixed(3)}  首尾间距 ${wrapGap.toFixed(4)}  最大偏离轮廓 ${maxDev.toFixed(3)}`);
+  if (!(zMax > 0.05 && zMax <= 0.081)) fail(`缠绕 turns=${turns}: Z 振幅异常`);
+  if (wrapGap > 0.12) fail(`缠绕 turns=${turns}: 首尾没接上（间距 ${wrapGap.toFixed(3)}）`);
+  if (maxDev > 0.06) fail(`缠绕 turns=${turns}: 偏离轮廓过多`);
+  if (path.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z))) fail(`缠绕 turns=${turns}: 出现非法值`);
+}
+const sp1 = strandPath(R[0].outer, { turns: 9, amp: 0.03, depth: 0.06 });
+const sp2 = strandPath(R[0].outer, { turns: 9, amp: 0.03, depth: 0.06 });
+console.log(`  真实轮廓: 点数 ${sp1.length}  可复现=${JSON.stringify(sp1) === JSON.stringify(sp2)}`);
+if (JSON.stringify(sp1) !== JSON.stringify(sp2)) fail('缠绕路径不可复现');
+if (strandPath([{x:0,y:0},{x:1,y:1}], { turns: 5 }) !== null) fail('缠绕：点数不足时应返回 null');
+
 console.log('------------------------------------------------------------------------------------------');
 if (failures === 0) {
-  console.log('全部通过：法线方向、斜接、绕向、面积守恒、圆角、毛边、透视、装饰排布、整圈法线');
+  console.log('全部通过：法线方向、斜接、绕向、面积守恒、圆角、毛边、透视、装饰排布、整圈法线、缠绕闭合');
 } else {
   console.log(`${failures} 项未通过`);
   process.exit(1);
