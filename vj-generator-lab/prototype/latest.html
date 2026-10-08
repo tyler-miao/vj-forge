@@ -632,17 +632,26 @@ function fitBackdrop(){
    下半部被灯光打成一片灰白，整幅画就"分层"了。
    修法不是把它改小（那样边更明显），而是用一张径向 alpha 贴图让它
    往外自然淡出到零 —— 没有边，就没有地平线。 */
+/* 淡出半径按世界单位定，不是按平面的比例。
+   教训：贴图映射在整块平面上时，用"占半径百分之多少"来定渐变，
+   会随平面尺寸一起放大。90×90 的平面上渐变到 45 单位才归零，
+   而取景只有 ±10 单位 —— 画面上它就是不透明的，于是留下一条地平线。
+   现在：平面 44×44（半宽 22），alpha 在 10.5 单位处归零。 */
+const GROUND_HALF = 22;
+const GROUND_FADE = 10.5;
 function makeRadialAlpha(){
   const S = 512;
   const cv = document.createElement('canvas'); cv.width = cv.height = S;
   const g = cv.getContext('2d');
   g.fillStyle = '#000'; g.fillRect(0,0,S,S);
   const rg = g.createRadialGradient(S/2,S/2,0, S/2,S/2,S/2);
-  rg.addColorStop(0.00,'#ffffff');
-  rg.addColorStop(0.30,'#f2f2f2');
-  rg.addColorStop(0.55,'#8a8a8a');
-  rg.addColorStop(0.80,'#242424');
-  rg.addColorStop(1.00,'#000000');
+  const at = (units) => units / GROUND_HALF;          // 世界单位 → 0..1
+  rg.addColorStop(0.00, '#ffffff');
+  rg.addColorStop(at(GROUND_FADE*0.30), '#f0f0f0');
+  rg.addColorStop(at(GROUND_FADE*0.58), '#7a7a7a');
+  rg.addColorStop(at(GROUND_FADE*0.82), '#1e1e1e');
+  rg.addColorStop(at(GROUND_FADE), '#000000');
+  rg.addColorStop(1.00, '#000000');
   g.fillStyle = rg; g.fillRect(0,0,S,S);
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.NoColorSpace;   // alphaMap 只取绿通道，不该做色彩转换
@@ -652,9 +661,9 @@ const groundMat = new THREE.MeshStandardMaterial({
   color:0x0d0305, roughness:0.88, metalness:0.12,
   alphaMap: makeRadialAlpha(), transparent:true, depthWrite:true
 });
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(90,90), groundMat);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(GROUND_HALF*2, GROUND_HALF*2), groundMat);
 ground.rotation.x = -Math.PI/2;
-ground.position.y = -1.55;
+ground.position.y = -1.62;
 ground.renderOrder = -50;      // 在火星之前画，避免透明物体排序把地面盖到粒子上
 scene.add(ground);
 
@@ -1400,6 +1409,10 @@ function setBgMode(m){
   imgField.style.display = (m === 'image') ? 'block' : 'none';
   proceduralOnly.style.display = (m === 'image') ? 'none' : 'block';
   [...segBg.children].forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  // 换成自己的图片时，默认收起地面：照片底下不该再铺一层地板，
+  // 而且它会在地平线处形成一条暗带。切回程序化背景时按用户自己的意愿恢复。
+  if (m === 'image') setGround(false);
+  else               setGround(groundUserPref);
   if (m === 'image' && !imgMat.uniforms.uHas.value){
     imgNote.textContent = '还没有图片。点上面的按钮，或直接把图片拖到左边预览区。';
   }
@@ -1446,6 +1459,17 @@ bind('i3','vi3', v => { imgMat.uniforms.uZoom.value = v; }, 2);
 
 /* ---------- 元素开关 ---------- */
 let ringsOn = true, lastRingGain = 0.40;
+let groundUserPref = true;                 // 用户自己的意愿（区别于"图片模式下临时收起"）
+
+function setSwitch(id, on){
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('on', !!on);
+}
+function setGround(on){
+  ground.visible = on;
+  setSwitch('swGround', on);
+}
+
 function wireSwitch(id, initial, onChange){
   const el = document.getElementById(id);
   if (!el) return;
@@ -1457,7 +1481,7 @@ function wireSwitch(id, initial, onChange){
   };
 }
 wireSwitch('swSparks', true, on => { sparks.pts.visible = on; });
-wireSwitch('swGround', true, on => { ground.visible = on; });
+wireSwitch('swGround', true, on => { groundUserPref = on; ground.visible = on; });
 wireSwitch('swRings', true, on => {
   ringsOn = on;
   bgMat.uniforms.uRingGain.value = on ? lastRingGain : 0;
