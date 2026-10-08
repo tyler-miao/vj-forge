@@ -380,10 +380,13 @@
 
         <div class="field">
           <label>元素开关</label>
-          <div class="switch"><span>火星粒子</span><button id="swSparks" class="on"></button></div>
+          <div class="switch"><span>背景层</span><button id="swBg" class="on"></button></div>
           <div class="switch"><span>地面</span><button id="swGround" class="on"></button></div>
+          <div class="switch"><span>火星粒子</span><button id="swSparks" class="on"></button></div>
           <div class="switch"><span>脉冲环</span><button id="swRings" class="on"></button></div>
+          <div class="switch"><span>辉光</span><button id="swBloom" class="on"></button></div>
           <div class="switch"><span>相机自转</span><button id="swSpin"></button></div>
+          <div class="note">排查画面问题时逐个关掉，就能确定是哪一层在捣乱。</div>
         </div>
       </div>
 
@@ -638,7 +641,7 @@ function fitBackdrop(){
    而取景只有 ±10 单位 —— 画面上它就是不透明的，于是留下一条地平线。
    现在：平面 44×44（半宽 22），alpha 在 10.5 单位处归零。 */
 const GROUND_HALF = 22;
-const GROUND_FADE = 10.5;
+const GROUND_FADE = 8.5;
 function makeRadialAlpha(){
   const S = 512;
   const cv = document.createElement('canvas'); cv.width = cv.height = S;
@@ -658,18 +661,18 @@ function makeRadialAlpha(){
   return t;
 }
 const groundMat = new THREE.MeshStandardMaterial({
-  color:0x0d0305, roughness:0.88, metalness:0.12,
+  color:0x060202, roughness:0.92, metalness:0.08,
   alphaMap: makeRadialAlpha(), transparent:true, depthWrite:true
 });
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(GROUND_HALF*2, GROUND_HALF*2), groundMat);
 ground.rotation.x = -Math.PI/2;
-ground.position.y = -1.62;
+ground.position.y = -2.35;
 ground.renderOrder = -50;      // 在火星之前画，避免透明物体排序把地面盖到粒子上
 scene.add(ground);
 
 const key  = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(2.5,4.5,6); scene.add(key);
-const rimL = new THREE.PointLight(0xff1f2e, 55, 44); rimL.position.set(-6,-1.6,4); scene.add(rimL);
-const rimR = new THREE.PointLight(0xff3344, 44, 44); rimR.position.set(6,2.0,-3); scene.add(rimR);
+const rimL = new THREE.PointLight(0xff1f2e, 40, 34); rimL.position.set(-5.5, 1.9, 4.5); scene.add(rimL);
+const rimR = new THREE.PointLight(0xff3344, 34, 34); rimR.position.set(5.8, 2.4, -3.2); scene.add(rimR);
 const topW = new THREE.PointLight(0xcfe2ff, 26, 44); topW.position.set(0,6.5,2); scene.add(topW);
 
 /* ============================ 火星 ============================
@@ -1401,11 +1404,15 @@ const proceduralOnly = document.getElementById('proceduralOnly');
 const fileImg = document.getElementById('fileImg');
 const imgNote = document.getElementById('imgNote');
 let bgMode = 'procedural';
+let bgLayerOn = true;
+function applyBgVisibility(){
+  bgMesh.visible  = bgLayerOn && bgMode === 'procedural';
+  imgMesh.visible = bgLayerOn && bgMode === 'image';
+}
 
 function setBgMode(m){
   bgMode = m;
-  bgMesh.visible = (m === 'procedural');
-  imgMesh.visible = (m === 'image');
+  applyBgVisibility();
   imgField.style.display = (m === 'image') ? 'block' : 'none';
   proceduralOnly.style.display = (m === 'image') ? 'none' : 'block';
   [...segBg.children].forEach(b => b.classList.toggle('on', b.dataset.v === m));
@@ -1490,6 +1497,14 @@ wireSwitch('swSpin', false, on => {
   loopSpin = on; controls.autoRotate = on; controls.autoRotateSpeed = 0.8;
   const b = document.getElementById('btnSpin'); if (b) b.classList.toggle('on', on);
 });
+// 背景层总开关：程序化背景和图片背景共用它
+wireSwitch('swBg', true, on => { bgLayerOn = on; applyBgVisibility(); });
+// 辉光开关（等价于把强度拉到 0，但一键更快）
+let bloomOn = true;
+wireSwitch('swBloom', true, on => {
+  bloomOn = on;
+  if (bloomPass) bloomPass.strength = on ? bloomStrength : 0;
+});
 
 // 滑块
 bind('g1','vg1', v => { style.dilate = v; queueRebuild(); }, 3);
@@ -1501,7 +1516,7 @@ bind('g4','vg4', v => { style.arch = v; queueRebuild(); }, 2);
 bind('g7','vg7', v => { style.persp = v; queueRebuild(); }, 2);
 bind('s1','v1', v => { paveDensity = v; applyDensity(); }, 0);
 bind('s2','v2', v => { if (current.face){ current.face.roughness = v; current.edge.roughness = Math.max(0.02, v*0.5); } }, 2);
-bind('s3','v3', v => { bloomStrength = v; if (bloomPass) bloomPass.strength = v; }, 2);
+bind('s3','v3', v => { bloomStrength = v; if (bloomPass && bloomOn) bloomPass.strength = v; }, 2);
 bind('s5','v5', v => { depth = v; queueRebuild(); }, 2);
 bind('s6','v6', v => { bevelSize = v; queueRebuild(); }, 3);
 bind('a1','va1', v => { adorn.base = v; rebuildSpikes(); }, 2);
