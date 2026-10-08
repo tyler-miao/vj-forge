@@ -15,6 +15,7 @@ testdata/                   测试台
   make_masks.py             用 Pillow 造测试掩膜（含中文字形）
   verify.mjs                描轮廓验证：矢量重栅格化 vs 原掩膜，IoU ≥ 0.99
   verify-style.mjs          变形与装饰验证：面积/周长/绕向/法线方向
+  verify-adorn-forms.mjs    边缘装饰形态验证：14 形态几何有效、两两可区分、尖锥未动
   debug*.mjs                排查用的临时脚本，保留以备复现
 
 fonts/                      开源街头字体
@@ -28,12 +29,16 @@ prototype/                  浏览器原型快照（最新一版）
 ## 怎么跑测试
 
 ```bash
+cd vj-generator-lab
+npm install                # 一次性：装 three（0.160.0，验证形态用）
+
 cd testdata
-node verify.mjs          # 描轮廓：8 个用例，IoU 全部 ≥ 0.997
-node verify-style.mjs    # 变形 + 装饰：Steiner 面积公式、整圈法线方向
+node verify.mjs             # 描轮廓：8 个用例，IoU 全部 ≥ 0.997
+node verify-style.mjs       # 变形 + 装饰：Steiner 面积公式、整圈法线方向
+node verify-adorn-forms.mjs # 边缘装饰：14 形态几何有效、两两可区分、尖锥逐字未动
 ```
 
-两套都是**定量**的，不是"看着还行"：
+三套都是**定量**的，不是"看着还行"：
 
 - 描轮廓：把矢量轮廓重新栅格化（4× 超采样覆盖率）和原掩膜比 IoU
 - 加粗：小量外扩 d 的面积增量应约等于 `P·d`（P 为周长）；实测比值 0.98–1.01，

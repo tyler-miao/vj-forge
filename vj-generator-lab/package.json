@@ -1,5 +1,8 @@
-﻿{
+{
   "name": "vj-generator-lab",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "three": "^0.160.0"
+  }
 }
