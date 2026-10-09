@@ -1,5 +1,5 @@
 ﻿import fs from "node:fs"; import path from "node:path"; import { fileURLToPath } from "node:url";
-import { traceContours } from "../src/trace-contours.mjs";
+import { traceContours } from "../src/trace-contours.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const index = JSON.parse(fs.readFileSync(path.join(HERE,"index.json"),"utf8"));
 // 用模块默认参数（不显式传任何 option）跑一遍，确认默认值就是测出来的最优值

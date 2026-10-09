@@ -200,7 +200,6 @@
 
 <header>
   <h1>3D VJ 生成器</h1>
-  <span class="sub">24 款开源街头字体 → 镶钻立体字 → 现场投屏 / 无缝循环视频</span>
   <span class="grow"></span>
   <span class="pill">离线可用</span>
 </header>
@@ -250,7 +249,7 @@
       <div class="pane on" data-pane="text">
         <div class="field">
           <label>名字</label>
-          <textarea id="txt" rows="1" spellcheck="false">刺头舞蹈</textarea>
+          <textarea id="txt" rows="1" spellcheck="false">Dylan</textarea>
           <div class="note">中英文都可以。字体直接用系统里的，不需要下载。</div>
         </div>
         <div class="field">
@@ -289,6 +288,12 @@
       <!-- ============ 外观 ============ -->
       <div class="pane" data-pane="look">
         <div class="field">
+          <label>画面位置</label>
+          <div class="slider"><span class="k"><span>左右</span><b id="vpx">0.00</b></span><input type="range" id="px" min="-1.5" max="1.5" step="0.01" value="0"></div>
+          <div class="slider"><span class="k"><span>上下</span><b id="vpy">0.00</b></span><input type="range" id="py" min="-1.5" max="1.5" step="0.01" value="0"></div>
+          <div class="note">只挪字，不动相机 —— 和预览区右键拖动（那是平移相机）互不干扰，想摆哪儿摆哪儿。</div>
+        </div>
+        <div class="field">
           <label>材质</label>
           <div class="chips" id="chipsMat"></div>
         </div>
@@ -307,8 +312,12 @@
           <label>边缘装饰</label>
           <div class="switch"><span>显示装饰</span><button id="swAdorn" class="on"></button></div>
           <div class="chips" id="chipsForm"></div>
+          <div class="note" id="adornNote"></div>
         </div>
-        <div class="field">
+
+        <!-- 尖锥：唯一原样保留的旧形态。选中「尖锥」时才显示它自己的排布控件 -->
+        <div class="field" id="coneOpts" style="display:none">
+          <label>尖锥排布</label>
           <div class="row2">
             <select id="pattern">
               <option value="fan">扇形弧</option>
@@ -331,6 +340,27 @@
           </div>
         </div>
 
+        <!-- 外轮廓：只改字体自己的外部轮廓，不往旁边摆任何立体装饰件 -->
+        <div class="field" id="outlineOpts">
+          <details class="adv">
+            <summary>外轮廓微调</summary>
+            <div>
+              <div class="slider"><span class="k"><span>描边粗细</span><b id="vgo1">0.060</b></span><input type="range" id="go1" min="0.010" max="0.140" step="0.001" value="0.060"></div>
+              <div class="slider"><span class="k"><span>留白（缺口多少）</span><b id="vgo2">0.35</b></span><input type="range" id="go2" min="0" max="1" step="0.01" value="0.35"></div>
+              <div class="slider"><span class="k"><span>手绘抖动</span><b id="vgo3">0.55</b></span><input type="range" id="go3" min="0" max="1" step="0.01" value="0.55"></div>
+              <div class="slider"><span class="k"><span>阴影偏移</span><b id="vgo4">0.022</b></span><input type="range" id="go4" min="0" max="0.080" step="0.001" value="0.022"></div>
+              <div class="slider"><span class="k"><span>滴漆</span><b id="vgo5">2</b></span><input type="range" id="go5" min="0" max="5" step="1" value="2"></div>
+              <div class="slider"><span class="k"><span>箭头</span><b id="vgo6">1</b></span><input type="range" id="go6" min="0" max="3" step="1" value="1"></div>
+              <div class="slider"><span class="k"><span>喷漆飞溅</span><b id="vgo7">4</b></span><input type="range" id="go7" min="0" max="8" step="1" value="4"></div>
+              <div class="slider"><span class="k"><span>涂鸦线</span><b id="vgo8">2</b></span><input type="range" id="go8" min="0" max="4" step="1" value="2"></div>
+              <div class="slider"><span class="k"><span>夸张尖角</span><b id="vgo9">2</b></span><input type="range" id="go9" min="0" max="4" step="1" value="2"></div>
+              <div class="slider"><span class="k"><span>手绘划线</span><b id="vgo10">1</b></span><input type="range" id="go10" min="0" max="3" step="1" value="1"></div>
+              <div class="switch"><span>用强调色描边</span><button id="swGoAccent"></button></div>
+              <div class="note">所有元素都贴在轮廓上、有数量上限、元素之间强制留间距；粗描边按弧长切段并留缺口，不会绕成一圈。</div>
+            </div>
+          </details>
+        </div>
+
         <div class="field">
           <label>缠绕</label>
           <div class="chips" id="chipsStrand"></div>
@@ -341,7 +371,6 @@
           <div class="slider"><span class="k"><span>粗细</span><b id="vs2">1.00</b></span><input type="range" id="st2" min="0.4" max="2.4" step="0.05" value="1"></div>
           <div class="slider"><span class="k"><span>包裹松紧</span><b id="vs3">0.030</b></span><input type="range" id="st3" min="0.005" max="0.075" step="0.001" value="0.030"></div>
           <div class="slider"><span class="k"><span>前后摆动</span><b id="vs4">0.055</b></span><input type="range" id="st4" min="0" max="0.18" step="0.005" value="0.055"></div>
-          <div class="switch"><span>叶子</span><button id="swLeaves" class="on"></button></div>
         </div>
       </div>
 
@@ -364,6 +393,9 @@
             <div class="slider"><span class="k"><span>亮度</span><b id="vi1">0.55</b></span><input type="range" id="i1" min="0.05" max="1.4" step="0.01" value="0.55"></div>
             <div class="slider"><span class="k"><span>暗角</span><b id="vi2">0.85</b></span><input type="range" id="i2" min="0" max="1.4" step="0.01" value="0.85"></div>
             <div class="slider"><span class="k"><span>缩放</span><b id="vi3">1.00</b></span><input type="range" id="i3" min="0.6" max="2.6" step="0.01" value="1"></div>
+            <div class="slider"><span class="k"><span>左右位置</span><b id="vi4">0.00</b></span><input type="range" id="i4" min="-0.5" max="0.5" step="0.005" value="0"></div>
+            <div class="slider"><span class="k"><span>上下位置</span><b id="vi5">0.00</b></span><input type="range" id="i5" min="-0.5" max="0.5" step="0.005" value="0"></div>
+            <div class="note">把图片在画面里推着走。先把「缩放」调大再平移，才不会在边上露出空。</div>
           </div>
         </div>
 
@@ -371,6 +403,11 @@
           <div class="field">
             <label>背景配色</label>
             <div class="chips" id="chipsBg"></div>
+          </div>
+          <div class="field">
+            <label>背景图案</label>
+            <div class="chips" id="chipsPattern"></div>
+            <div class="note">原来是写死的一张放射爆裂，现在拆成 8 种，配色与图案互不影响。</div>
           </div>
           <div class="field">
             <label>强调色</label>
@@ -385,6 +422,8 @@
             <div class="slider"><span class="k"><span>爆裂线</span><b id="vb1">0.55</b></span><input type="range" id="b1" min="0" max="1.6" step="0.01" value="0.55"></div>
             <div class="slider"><span class="k"><span>脉冲环</span><b id="vb2">0.40</b></span><input type="range" id="b2" min="0" max="1.6" step="0.01" value="0.40"></div>
             <div class="slider"><span class="k"><span>网点质感</span><b id="vb3">0.30</b></span><input type="range" id="b3" min="0" max="1.6" step="0.01" value="0.30"></div>
+            <div class="slider"><span class="k"><span>图案密度</span><b id="vb4">1.00</b></span><input type="range" id="b4" min="0.35" max="2.60" step="0.01" value="1"></div>
+            <div class="note">前三个管强度，第四个管条纹／网格／波纹的疏密。</div>
           </div>
         </div>
 
@@ -422,12 +461,13 @@ function fail(title, detail){
 addEventListener('error', e => fail('出错了', (e.message||'') + '<br>' + (e.filename||'')));
 addEventListener('unhandledrejection', e => fail('加载失败', String((e.reason && e.reason.message) || e.reason)));
 
-let THREE, TRACE, STYLEMOD, EDGE, OrbitControls;
+let THREE, TRACE, STYLEMOD, EDGE, GRAF, OrbitControls;
 try {
   THREE = await import('three');
   TRACE = await import('/files/trace-contours.js');
   STYLEMOD = await import('/files/stylize-contours.js');
   EDGE = await import('/files/edge-adornments.js');
+  GRAF = await import('/files/graffiti-outline.js');
   ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
 } catch (e) {
   fail('模块没加载下来', 'three 与 OrbitControls 需要 unpkg.com，其余模块需要本机预览服务。<br>' + e.message);
@@ -549,7 +589,8 @@ const bgMat = new THREE.ShaderMaterial({
     uDeep:{value:new THREE.Color('#040103')},
     uAccent:{value:new THREE.Color('#ff5a3c')},
     uRays:{value:54}, uRayGain:{value:0.55},
-    uRingGain:{value:0.40}, uDotGain:{value:0.30}
+    uRingGain:{value:0.40}, uDotGain:{value:0.30},
+    uPattern:{value:0}, uDensity:{value:1.0}
   },
   vertexShader: `
     varying vec2 vUv;
@@ -558,8 +599,57 @@ const bgMat = new THREE.ShaderMaterial({
   fragmentShader: `
     varying vec2 vUv;
     uniform float uPhase, uAspect, uRays, uRayGain, uRingGain, uDotGain;
+    uniform float uPattern, uDensity;
     uniform vec2 uPar;
     uniform vec3 uHot, uMid, uDeep, uAccent;
+
+    float hash21(vec2 p){
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+    float vnoise(vec2 p){
+      vec2 i = floor(p), f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      float a = hash21(i), b = hash21(i + vec2(1.0, 0.0));
+      float c = hash21(i + vec2(0.0, 1.0)), d = hash21(i + vec2(1.0, 1.0));
+      return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+    }
+
+    /* 八套图案，各自返回 0..1 的遮罩；配色走 uAccent/uHot，与图案互不影响 */
+    /* 各分支只管"纹理长什么样"，不再自己带径向衰减 —— 收边统一放在
+       main 里图案层那一步做。原来每支都乘一个 smoothstep(大, 小, r)，
+       倒序写法本身就依赖驱动实现，再叠上底色暗角，图案刚画出来就被吃光，
+       在字母后面那一圈根本看不见，只剩一层红雾。 */
+    float patternMask(vec2 c, float r, float a){
+      float D = uDensity;
+      float T = uPhase * 6.2831853;
+      if (uPattern < 0.5) {                       // 放射爆裂（默认，老样子）
+        float ray = pow(abs(sin(a * uRays * 0.5 * D + T)), 5.0);
+        return ray * (1.0 - smoothstep(0.10, 1.25, r)) * smoothstep(0.02, 0.16, r);
+      } else if (uPattern < 1.5) {                // 斜向条纹
+        float s = (c.x + c.y) * 11.0 * D + T;
+        return pow(abs(sin(s)), 5.0);
+      } else if (uPattern < 2.5) {                // 网格
+        vec2 g = c * 7.0 * D;
+        vec2 gf = abs(fract(g) - 0.5);
+        return max(smoothstep(0.44, 0.50, gf.x), smoothstep(0.44, 0.50, gf.y));
+      } else if (uPattern < 3.5) {                // 同心波纹（软，和脉冲环的硬线不撞）
+        float wv = sin(r * 17.0 * D - T * 2.0) * 0.5 + 0.5;
+        return smoothstep(0.55, 0.95, wv);
+      } else if (uPattern < 4.5) {                // 半调大网点
+        vec2 gd = fract(c * 9.0 * D + vec2(uPhase * 0.35)) - 0.5;
+        return smoothstep(0.44, 0.14, length(gd));
+      } else if (uPattern < 5.5) {                // 噪点云
+        float n = vnoise(c * 3.6 * D + vec2(uPhase * 1.4, -uPhase * 0.7));
+        n = mix(n, vnoise(c * 8.0 * D - vec2(uPhase * 2.1)), 0.45);
+        return smoothstep(0.44, 0.84, n);
+      } else if (uPattern < 6.5) {                // 扫描线
+        float sl = abs(sin(c.y * 120.0 * D + T * 0.5));
+        return pow(1.0 - sl, 10.0);
+      }
+      return 0.0;                                 // 纯净渐变：什么都不加
+    }
 
     void main(){
       vec2 c = vUv - 0.5 - uPar;
@@ -570,11 +660,6 @@ const bgMat = new THREE.ShaderMaterial({
       vec3 col = mix(uHot, uMid, smoothstep(0.0, 0.42, r));
       col = mix(col, uDeep, smoothstep(0.30, 1.00, r));
 
-      // 放射爆炸线：每循环转一圈
-      float ray = pow(abs(sin(a * uRays * 0.5 + uPhase * 6.2831853)), 5.0);
-      float rayFall = smoothstep(1.25, 0.10, r) * smoothstep(0.02, 0.16, r);
-      col += mix(uAccent, uHot, 0.45) * ray * rayFall * uRayGain;
-
       // 同心脉冲环：每循环向外推 3 圈
       float ring = pow(abs(sin(r * 9.0 - uPhase * 18.849556)), 44.0);
       col += uAccent * ring * smoothstep(1.10, 0.18, r) * uRingGain;
@@ -584,7 +669,15 @@ const bgMat = new THREE.ShaderMaterial({
       float ht = smoothstep(0.34, 0.09, length(gd));
       col += uMid * ht * (0.25 + 0.85 * r) * uDotGain;
 
+      // 底色暗角先压掉，让 3D 字跳出来
       col *= 1.0 - smoothstep(0.42, 1.18, r) * 0.96;
+
+      // 图案层压在暗角之后，自己带一套柔和的径向收边。
+      // 顺序很关键：先画图案再压暗角，图案在字母周围那一圈会连着底色一起被抹平，
+      // 八套图案看起来全是同一团红雾。
+      float pm = patternMask(c, r, a);
+      col += mix(uAccent, uHot, 0.45) * pm * uRayGain * (1.0 - smoothstep(0.70, 1.80, r));
+
       gl_FragColor = vec4(col, 1.0);
     }
   `,
@@ -602,20 +695,24 @@ camera.add(bgMesh);
 const imgMat = new THREE.ShaderMaterial({
   uniforms: {
     uHas:{value:0}, uTex:{value:null}, uAspect:{value:16/9}, uImgAspect:{value:1},
-    uDim:{value:0.55}, uVig:{value:0.85}, uZoom:{value:1.0}
+    uDim:{value:0.55}, uVig:{value:0.85}, uZoom:{value:1.0},
+    uPan:{value:new THREE.Vector2(0, 0)}
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
     varying vec2 vUv;
     uniform sampler2D uTex;
     uniform float uHas, uAspect, uImgAspect, uDim, uVig, uZoom;
+    uniform vec2 uPan;
     void main(){
       if (uHas < 0.5) { gl_FragColor = vec4(0.016, 0.008, 0.02, 1.0); return; }
       // cover 适配：屏幕更宽就裁图片上下，图片更宽就裁左右
       vec2 uv = vUv - 0.5;
       if (uAspect > uImgAspect) uv.y *= uImgAspect / uAspect;
       else                      uv.x *= uAspect / uImgAspect;
-      uv = uv / uZoom + 0.5;
+      // uPan 最后扣：缩放是"以中心为原点推拉"，平移是"推拉完了再整体挪"，
+      // 顺序反了平移量会被缩放吃掉，滑块拉半天画面不动。
+      uv = uv / uZoom + 0.5 - uPan;
       vec3 c = texture2D(uTex, clamp(uv, 0.0, 1.0)).rgb;
       c = pow(c, vec3(2.2));                       // sRGB → 线性（最终由 OutputPass 统一编码）
       c *= uDim;
@@ -689,6 +786,12 @@ const key  = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(2.5,4.5
 const rimL = new THREE.PointLight(0xff1f2e, 40, 34); rimL.position.set(-5.5, 1.9, 4.5); scene.add(rimL);
 const rimR = new THREE.PointLight(0xff3344, 34, 34); rimR.position.set(5.8, 2.4, -3.2); scene.add(rimR);
 const topW = new THREE.PointLight(0xcfe2ff, 26, 44); topW.position.set(0,6.5,2); scene.add(topW);
+/* 背面补光：原来背后只有 rimR 那盏红点光，字背和挤出侧面全沉成暗红发黑，
+   白色尖锥在暗底上一枝独秀 —— 转过去看就是"一堆突起、很脏"。
+   这盏平行光从正后方略偏左上来，只照背对着镜头的面（正面一点不受影响），
+   把字背和侧面提回能看清形体的亮度。 */
+const backF = new THREE.DirectionalLight(0xf3f7ff, 1.9);
+backF.position.set(-2.6, 3.2, -6.5); scene.add(backF);
 
 /* ============================ 火星 ============================
    之前用 PointsMaterial，整片一个透明度，粒子场就是个有边的长方体
@@ -997,186 +1100,14 @@ const BACKDROPS = {
   neon:  { label:'霓虹紫', hot:'#5a0a52', mid:'#1e0320', deep:'#040105', accent:'#ff2fd0', rays:96, ray:0.60, ring:0.60, dot:0.36, lit:[0xff2fd0,0x8a2be2], spark:0xff8ae0 }
 };
 
-/* ============================ 边缘装饰形态 ============================
-   分三类，这样"换形态"才真的换的是形态，而不是换一种尖刺：
-     尖刺类 —— 带尖的街头符号（尖锥 / 麦克风 / 鸭舌帽 / 五角星 / 钻石）
-     块状类 —— 音响系（大音响 / 磁带 / 均衡器 / 号角喇叭）
-     圆环类 —— 饰品系（黑胶唱片 / 金链 / 皇冠 / 涂鸦漆滴 / 耳机）
-   整套按 hip-hop 街头元素重做：麦克风／黑胶／金链／皇冠／喷漆…… 都是
-   老派说唱里真正会挂在字面边缘的东西，只有「尖锥」保持原来不动。
-   noSpin: 生成实例时不做随机自转（均衡器/五角星/耳机等扁平件要整齐朝向观众） */
-function mergeGeos(geos){
-  // 把多个带索引几何体拼成一份，各子几何体内部索引原样保留 ——
-  // 这样 normalizeUnitHeight 重算法线时仍是平滑的，不会退化成棱面。
-  const pos = [], norm = [], uv = [], idx = [];
-  let vOff = 0, hasUv = false;
-  for (const g of geos){
-    g.computeVertexNormals();
-    const p = g.attributes.position, n = g.attributes.normal, u = g.attributes.uv;
-    if (u) hasUv = true;
-    for (let i = 0; i < p.count; i++){
-      pos.push(p.getX(i), p.getY(i), p.getZ(i));
-      norm.push(n ? n.getX(i) : 0, n ? n.getY(i) : 1, n ? n.getZ(i) : 0);
-      uv.push(u ? u.getX(i) : 0, u ? u.getY(i) : 0);
-    }
-    const gi = g.getIndex();
-    if (gi){
-      for (let i = 0; i < gi.count; i++) idx.push(gi.getX(i) + vOff);
-    } else {
-      for (let i = 0; i < p.count; i++) idx.push(i + vOff);
-    }
-    vOff += p.count;
-    g.dispose();
-  }
-  const merged = new THREE.BufferGeometry();
-  merged.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  merged.setAttribute('normal', new THREE.Float32BufferAttribute(norm, 3));
-  if (hasUv) merged.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  merged.setIndex(idx);
-  return merged;
-}
-
+/* ============================ 边缘装饰 · 尖锥 ============================
+   这一栏原本有 14 种立体装饰件（麦克风 / 音响 / 磁带 / 黑胶 / 皇冠 / 耳机 …），
+   全部移除了 —— 它们是"摆在字体旁边的独立装饰物"，正是要否定的做法。
+   现在只剩两件事：
+     · 尖锥 —— 唯一原样保留的形态，一行没动
+     · 外轮廓 —— 重新设计的"字体自身的外部轮廓"，见 src/graffiti-outline.js */
 const ADORN_FORMS = {
   cone:   { label:'尖锥',     kind:'尖刺', make: () => new THREE.ConeGeometry(0.058, 1, 10, 1, false) },
-  mic:    { label:'麦克风',   kind:'尖刺', make: () => {
-            // 老式说唱话筒：细手柄 + 大球形拾音头，头重脚轻才像"吼麦"
-            const prof = [
-              [0.042, 0.00], [0.050, 0.20], [0.054, 0.34],
-              [0.050, 0.44],
-              [0.088, 0.52], [0.148, 0.62], [0.172, 0.72],
-              [0.176, 0.80], [0.142, 0.90], [0.086, 0.97], [0.000, 1.00]
-            ];
-            const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
-            return new THREE.LatheGeometry(pts, 20);
-          } },
-  cap:    { label:'鸭舌帽',   kind:'尖刺', make: () => {
-            // 立体棒球帽：半球帽冠 + 底部帽檐盘，任意角度看都认得出
-            const dome = new THREE.SphereGeometry(0.19, 20, 12, 0, Math.PI*2, 0, Math.PI/2);
-            dome.translate(0, 0.30, 0);
-            const brim = new THREE.TorusGeometry(0.19, 0.06, 8, 20);
-            brim.rotateX(Math.PI/2);
-            brim.translate(0, 0.09, 0);
-            return mergeGeos([brim, dome]);
-          } },
-  star:   { label:'五角星',   kind:'尖刺', noSpin:true, make: () => {
-            // 说唱歌手链坠上那种五角星，压扁、正面朝外
-            const s = new THREE.Shape();
-            for (let i = 0; i < 10; i++){
-              const r = (i % 2 === 0) ? 0.135 : 0.062;
-              const a = Math.PI/2 + (i * Math.PI) / 5;
-              const x = Math.cos(a) * r, y = Math.sin(a) * r;
-              i === 0 ? s.moveTo(x, y) : s.lineTo(x, y);
-            }
-            s.closePath();
-            return new THREE.ExtrudeGeometry(s, { depth: 0.20, bevelEnabled:false, curveSegments:1 });
-          } },
-  spray:  { label:'喷漆罐',   kind:'块状', make: () => {
-            // 涂鸦喷漆罐：罐身 + 收肩 + 顶上喷嘴，街头符号感最强
-            const prof = [
-              [0.000, 0.00], [0.125, 0.03], [0.130, 0.30], [0.126, 0.50],
-              [0.080, 0.58], [0.075, 0.70], [0.075, 0.78],
-              [0.048, 0.82], [0.044, 0.88], [0.000, 0.88]
-            ];
-            const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
-            return new THREE.LatheGeometry(pts, 20);
-          } },
-
-  boombox:{ label:'大音响',   kind:'块状', noSpin:true, make: () => {
-            // 手提收录机：机身 + 两个外露的喇叭，正面朝向观众
-            const body = new THREE.BoxGeometry(0.22, 0.55, 0.12);
-            body.translate(0, 0.26, 0);
-            const mkSpk = (y) => {
-              const c = new THREE.CylinderGeometry(0.060, 0.060, 0.07, 20);
-              c.translate(0, y, 0.085);
-              return c;
-            };
-            return mergeGeos([body, mkSpk(0.44), mkSpk(0.06)]);
-          } },
-  cassette:{label:'磁带',    kind:'块状', noSpin:true, make: () => {
-            // 磁带：扁方盒 + 两个卷轴孔 + 中间标签窗，正面朝向观众
-            const body = new THREE.BoxGeometry(0.26, 0.24, 0.075);
-            body.translate(0, 0.34, 0);
-            const mkReel = (x) => {
-              const c = new THREE.CylinderGeometry(0.036, 0.036, 0.02, 18);
-              c.translate(x, 0.36, 0.045);
-              return c;
-            };
-            const win = new THREE.BoxGeometry(0.10, 0.09, 0.012);
-            win.translate(0, 0.10, 0.04);
-            return mergeGeos([body, mkReel(-0.075), mkReel(0.075), win]);
-          } },
-  eq:     { label:'均衡器',   kind:'块状', noSpin:true, make: () => {
-            // 频谱推子：几根高矮不一的细柱并排，正面朝向观众
-            const bars = [0.62, 1.00, 0.78, 0.92, 0.54].map((h, i) => {
-              const b = new THREE.BoxGeometry(0.055, h, 0.13);
-              b.translate((i - 2) * 0.072, h/2, 0);
-              return b;
-            });
-            return mergeGeos(bars);
-          } },
-  horn:   { label:'号角喇叭', kind:'块状', make: () => {
-            // 老收录机喇叭的号角口：细喉部向外炸开成敞口
-            const prof = [
-              [0.000, 0.00], [0.056, 0.08], [0.066, 0.26], [0.074, 0.48],
-              [0.104, 0.66], [0.155, 0.82], [0.185, 0.92], [0.190, 1.00]
-            ];
-            const pts = prof.map(([r, y]) => new THREE.Vector2(r, y));
-            return new THREE.LatheGeometry(pts, 18);
-          } },
-
-  vinyl:  { label:'黑胶唱片', kind:'圆环', make: () => {
-            // 黑胶：唱盘（粗环）+ 中心标签，环平面垂直于生长轴
-            const disc = new THREE.TorusGeometry(0.095, 0.034, 10, 28);
-            disc.rotateX(Math.PI/2);
-            const label = new THREE.CylinderGeometry(0.050, 0.050, 0.090, 18);
-            return mergeGeos([disc, label]);
-          } },
-  chain:  { label:'金链',     kind:'圆环', make: () => {
-            // 两节十字交错的链环，像金链子的一截
-            const a = new THREE.TorusGeometry(0.075, 0.035, 8, 18);
-            a.rotateX(Math.PI/2);
-            const b = new THREE.TorusGeometry(0.075, 0.035, 8, 18);
-            b.rotateY(Math.PI/2);
-            return mergeGeos([a, b]);
-          } },
-  crown:  { label:'皇冠',     kind:'圆环', make: () => {
-            // 说唱里的"王者"冠冕：底环 + 三根尖锥
-            const band = new THREE.CylinderGeometry(0.120, 0.124, 0.16, 14);
-            band.translate(0, 0.08, 0);
-            const mk = (x, h) => {
-              const c = new THREE.ConeGeometry(0.060, h, 8);
-              c.translate(x, 0.16 + h/2, 0);
-              return c;
-            };
-            return mergeGeos([band, mk(0, 0.26), mk(-0.075, 0.18), mk(0.075, 0.18)]);
-          } },
-  graffiti:{label:'涂鸦漆滴', kind:'圆环', make: () => {
-            // 喷漆没干就从边缘垂下来的漆滴，往一侧歪、带点 S 形
-            const pts = [];
-            for (let i = 0; i <= 16; i++){
-              const t = i/16;
-              const r = Math.sin(Math.pow(t, 0.62) * Math.PI) * 0.150 * (1 - 0.60*t) + 0.008;
-              pts.push(new THREE.Vector2(r, t));
-            }
-            const g = new THREE.LatheGeometry(pts, 16);
-            const p = g.attributes.position;
-            for (let i = 0; i < p.count; i++){
-              const y = p.getY(i);
-              p.setX(i, p.getX(i) + Math.sin(y * 4.0) * 0.070 * y);
-            }
-            return g;
-          } },
-  phones: { label:'耳机',     kind:'圆环', noSpin:true, make: () => {
-            // DJ 头戴耳机：加粗头梁 + 厚耳罩（耳罩面朝观众），立体不显薄
-            const band = new THREE.TorusGeometry(0.075, 0.030, 8, 22);
-            const mk = (x) => {
-              const c = new THREE.CylinderGeometry(0.048, 0.050, 0.060, 18);
-              c.rotateX(Math.PI/2);
-              c.translate(x, -0.030, 0);
-              return c;
-            };
-            return mergeGeos([band, mk(-0.062), mk(0.062)]);
-          } }
 };
 
 /* ============================ 字形 ============================ */
@@ -1304,21 +1235,22 @@ function buildAdornments(geo, material, opts){
    和边缘装饰是两类东西：装饰是"往外长"，缠绕是**沿着字形轮廓螺旋包裹**。
    做法是把轮廓点当成一条路径，沿路径前进的同时让管子绕轮廓法线转圈 ——
    数学上就是一条套在字形边缘上的螺旋线，再扫成管道。
-   圈数取整数，路径才能闭合成环，接缝处不会有断口。 */
+   圈数取整数，路径才能闭合成环，接缝处不会有断口。
+
+   四种线材都是中性的"线"：描边线 / 轮廓线 / 阴影线 / 双钩线。
+   不带任何自然（藤蔓·麻绳）或机械（铁丝·锁链）意象。 */
 const STRANDS = {
-  none:  { label:'不缠' },
-  vine:  { label:'藤蔓', color:0x51682f, radius:0.030, rough:0.86, metal:0.0, leaves:true,  twist:1.0 },
-  rope:  { label:'麻绳', color:0xb08a52, radius:0.033, rough:0.95, metal:0.0, leaves:false, twist:5.0 },
-  wire:  { label:'铁丝', color:0x9aa2ac, radius:0.014, rough:0.34, metal:1.0, leaves:false, twist:1.0 },
-  chain: { label:'锁链', color:0xc4c9d2, radius:0.026, rough:0.28, metal:1.0, leaves:false, twist:9.0 }
+  none:    { label:'不缠' },
+  stroke:  { label:'描边线', color:0x14141c, radius:0.030, rough:0.72, metal:0.10, twist:1.0 },
+  outline: { label:'轮廓线', color:0xe6e8f0, radius:0.015, rough:0.42, metal:0.25, twist:1.0 },
+  shade:   { label:'阴影线', color:0x08080c, radius:0.040, rough:0.92, metal:0.00, twist:1.0 },
+  double:  { label:'双钩线', color:0xb6bcc8, radius:0.021, rough:0.28, metal:0.70, twist:1.0 }
 };
 
 
 /** 沿所有外轮廓生成缠绕管 + 可选叶片 */
 function buildStrands(outlines, mat, opts, seed){
   const holder = new THREE.Group();
-  const rng = EDGE.mulberry32(seed || 7);
-  const leafPts = [];
   const pathOpts = { turns: opts.turns, amp: opts.amp, depth: opts.depth };
 
   for (const ring of outlines){
@@ -1329,47 +1261,6 @@ function buildStrands(outlines, mat, opts, seed){
     const geo = new THREE.TubeGeometry(curve, pts.length, opts.radius, 8, true);
     const mesh = new THREE.Mesh(geo, mat);
     holder.add(mesh);
-
-    if (opts.leaves){
-      const count = Math.max(5, Math.round(pts.length / 16));
-      for (let i = 0; i < count; i++){
-        const u = (i + 0.5) / count;
-        const p = curve.getPointAt(u);
-        const tan = curve.getTangentAt(u);
-        // 叶片朝轮廓外侧长，不要全部冲着画面
-        const rad = new THREE.Vector3(p.x, p.y, 0).normalize();
-        leafPts.push({ p, tan, rad, s: 0.6 + rng() * 0.9, spin: rng() * Math.PI * 2 });
-      }
-    }
-  }
-
-  if (leafPts.length){
-    // 注意：不要走 normalizeUnitHeight —— 那会把叶片归一化到"高度 1"，
-    // 也就是跟整个字一样高。叶片就该是压扁的小球，尺寸直接用几何体本身定。
-    const lg = new THREE.SphereGeometry(0.055, 8, 6);
-    lg.scale(0.50, 0.20, 1.05);                    // 约 x0.055 y0.022 z0.115
-    const leafMat = new THREE.MeshStandardMaterial({
-      color: 0x6d8a3a, roughness: 0.78, metalness: 0.0
-    });
-    const lm = new THREE.InstancedMesh(lg, leafMat, leafPts.length);
-    lm.frustumCulled = false;
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion();
-    const tq = new THREE.Quaternion(), sq = new THREE.Quaternion();
-    const up = new THREE.Vector3(0,1,0), zAx = new THREE.Vector3(0,0,1);
-    const v = new THREE.Vector3(), s = new THREE.Vector3();
-    leafPts.forEach((L, i) => {
-      // 先把叶片的 +Y 对齐到轮廓外法线，再绕它随机转，最后稍微偏离一点避免死板
-      const ang = Math.atan2(L.rad.y, L.rad.x) - Math.PI/2;
-      q.setFromAxisAngle(zAx, ang + (L.spin - Math.PI) * 0.25);
-      tq.setFromAxisAngle(up, L.spin); q.multiply(tq);
-      sq.setFromAxisAngle(zAx, (rng() - 0.5) * 0.9); q.multiply(sq);
-      v.copy(L.p);
-      s.set(L.s, L.s, L.s);
-      m.compose(v, q, s);
-      lm.setMatrixAt(i, m);
-    });
-    lm.instanceMatrix.needsUpdate = true;
-    holder.add(lm);
   }
   return holder;
 }
@@ -1387,8 +1278,38 @@ let loopSpin = false, objSway = true;
 const style = { dilate:0.030, spike:1.20, shear:0.14, arch:0.08, round:0.000, rough:0.000, persp:0.10, seed:1337 };
 const adorn = { form:'cone', pattern:'fan', sides:'both', base:0.34, jitter:0.35, lean:0.55, spacing:0.13, seed:20261007 };
 let adornOn = true;
+let outlineStyle = 'cone';       // 'cone' = 原来的尖锥（默认）；其余 = 走外轮廓那条路
+const grpPos = { x: 0, y: 0 };   // 字本身在画面里的位置（不动相机）
+
+/* ---- 边缘装饰的两套内容 ----
+   'cone'  走原来那条路：沿上下边缘／整圈排布尖锥，一行没改
+   其余     走 src/graffiti-outline.js：只重画字体自身的外部轮廓
+   六个预设各自把下面十个参数一次设好，滑块再做微调。 */
+const OUTLINE_STYLES = {
+  cone:    { label:'尖锥',
+             note:'原来的尖刺阵列，原样保留 —— 选它时下面显示的还是原来那套排布控件。' },
+  fat:     { label:'粗描边', width:.055, leave:.08, jitter:.35, shadow:.018,
+             drips:0, arrows:0, splats:0, tags:1, spikes:0, hatches:0, swash:false,
+             note:'只有一圈不规则粗描边，最克制的一档。' },
+  street:  { label:'街头描边', width:.060, leave:.35, jitter:.42, shadow:.022,
+             drips:2, arrows:1, splats:4, tags:2, spikes:2, hatches:1, swash:true,
+             note:'粗描边 + 少量滴漆／箭头／飞溅／尖角。每样都有数量上限，不铺满一圈。' },
+  stencil: { label:'模版涂鸦', width:.050, leave:.55, jitter:.72, shadow:.030,
+             drips:3, arrows:2, splats:7, tags:3, spikes:3, hatches:2, swash:true,
+             note:'缺口更多、手绘感更强，飞溅与划线更密。' },
+  mixtape: { label:'Mixtape', width:.072, leave:.24, jitter:.40, shadow:.045,
+             drips:1, arrows:0, splats:2, tags:2, spikes:0, hatches:1, swash:true,
+             note:'厚描边 + 明显的右下偏移阴影，老派 mixtape 封面的味道。' },
+  minimal: { label:'极简', width:.034, leave:.05, jitter:.22, shadow:.012,
+             drips:0, arrows:0, splats:0, tags:1, spikes:0, hatches:0, swash:false,
+             note:'一道细描边收住轮廓，别的什么都没有。' }
+};
+const GO = { style:'street', width:.060, leave:.35, jitter:.42, shadow:.022,
+             drips:2, arrows:1, splats:4, tags:2, spikes:2, hatches:1,
+             swash:true, accent:false, seed:20261008 };
+
 // 缠绕：turns 必须整数圈，路径才能闭合
-const strand = { kind:'none', turns:8, radius:0.030, amp:0.030, depth:0.055, leaves:true, seed:99 };
+const strand = { kind:'none', turns:8, radius:0.030, amp:0.030, depth:0.055, seed:99 };
 
 document.getElementById('loading').style.display = 'none';
 
@@ -1441,7 +1362,7 @@ function rebuildStrands(){
   });
   strandMesh = buildStrands(lastOutlines, mat,
     { turns: strand.turns, radius: strand.radius * def.twist, amp: strand.amp,
-      depth: strand.depth, leaves: strand.leaves && def.leaves },
+      depth: strand.depth },
     strand.seed);
   group.add(strandMesh);
 }
@@ -1456,10 +1377,328 @@ function applyDensity(){
 function rebuildSpikes(){
   if (!lastGeo || !current.face) return;
   if (spikeMesh){ group.remove(spikeMesh); spikeMesh.geometry.dispose(); spikeMesh.dispose(); spikeMesh = null; }
-  if (!adornOn) return;
+  if (!adornOn || outlineStyle !== 'cone'){ spikeText = ''; updateDiag(); return; }
   spikeMesh = buildAdornments(lastGeo, current.face,
     { count: lastCount, outline: lastOutline, ...adorn });
   group.add(spikeMesh);
+  spikeText = ` · 装饰 <b>${lastCount}</b> 根`;
+  updateDiag();
+}
+
+/* ============================ 外轮廓（字体自身的外部轮廓） ============================
+   几何全部由 src/graffiti-outline.js 算，页面只把二维结果变成网格，两层：
+
+     描边层  贴在字的正后方一点点。压在字身上的那部分被字挡住，
+             露出来的就是"围着字的那圈粗描边" —— 所以它读起来是轮廓，
+             不是浮在字后面的贴片。
+     阴影层  同一套形状整体右下偏移、再往后压一档，就是 Offset / Shadow。
+
+   法线一律写死 (0,0,1)：条带在窄缝处会互相重叠，同色同法线才看不出接缝。
+   挂在 group 下，跟着字一起摆动、缩放。 */
+let outlineMesh = null, shadowMesh = null, outlineMat = null, shadowMat = null;
+let outlineStats = null;
+
+function outlineMaterials(){
+  if (outlineMat) return;
+  outlineMat = new THREE.MeshStandardMaterial({
+    color:0x14141c, roughness:0.62, metalness:0.15, side:THREE.DoubleSide
+  });
+  shadowMat = new THREE.MeshStandardMaterial({
+    color:0x05050a, roughness:0.90, metalness:0.0, side:THREE.DoubleSide
+  });
+}
+
+function applyOutlineColor(){
+  outlineMaterials();
+  if (GO.accent){
+    outlineMat.color.copy(bgMat.uniforms.uAccent.value);
+    outlineMat.roughness = 0.50; outlineMat.metalness = 0.0;
+  } else {
+    outlineMat.color.setHex(0x14141c);
+    outlineMat.roughness = 0.62; outlineMat.metalness = 0.15;
+  }
+}
+
+/* 把二维计划做成立体的"贴纸板"：前后两层盖 + 一圈侧壁。
+ *
+ * 为什么不能只画一张薄片：字会绕 Y 轴摇摆（objSway 最大 ±0.34 rad）。
+ * 薄片只在某一个 z 上，投影时会相对字身整体滑动，摇到头时
+ * 外扩量 W·cosθ 还抵不过字自身厚度的位移，描边会整条缩进字里消失。
+ * 做成和字同深度的整块板，前后盖分别贴着字的前后，
+ * 无论转到哪个角度，外轮廓永远刚好比字宽 W·cosθ —— 纹丝不动。
+ *
+ * 每个元素单独封成一个完整的板再拼起来，不跨元素去重：
+ * 不同元素可能共用同一组坐标（两条描边的内侧都压在同一条轮廓线上），
+ * 一旦全局去重，边界边会被顶成"出现两次"，那面墙就没了，板子漏风。
+ */
+function planToGeo(plan, ox, oy, z0, z1){
+  const pos = [], nrm = [];
+
+  /* 一个元素 -> 前后盖 + 侧壁。raw 是二维三角形，[x,y,x,y,...] */
+  const emit = (raw) => {
+    const nRaw = (raw.length / 6) | 0;
+    if (!nRaw) return;
+
+    // 同一个元素内部的顶点去重：相邻三角形共享的顶点必须拿到同一个编号，
+    // 否则"只出现一次的边"会把内部棱也当成边界，侧壁多出三倍来。
+    const vid = new Map();
+    const vert = [];
+    const tris = [];
+    for (let i = 0; i < nRaw; i++){
+      const ids = [];
+      for (let k = 0; k < 3; k++){
+        const x = raw[i*6 + k*2] + ox;
+        const y = raw[i*6 + k*2 + 1] + oy;
+        const key = x + "#" + y;
+        let id = vid.get(key);
+        if (id === undefined){ id = vert.length / 2; vid.set(key, id); vert.push(x, y); }
+        ids.push(id);
+      }
+      // 退化三角形（有两个顶点重合）整颗丢掉：它会把一条真实的外边界
+      // 顶成"出现两次"，那面墙就造不出来。
+      if (ids[0] === ids[1] || ids[1] === ids[2] || ids[2] === ids[0]) continue;
+      tris.push(ids[0], ids[1], ids[2]);
+    }
+    if (tris.length < 3) return;
+
+    const base = pos.length / 3;
+    for (let z = 0; z < 2; z++){
+      const zz = z ? z1 : z0, nz = z ? 1 : -1;
+      for (let i = 0; i < tris.length; i += 3){
+        for (let k = 0; k < 3; k++){
+          const id = tris[i + k];
+          pos.push(vert[id*2], vert[id*2+1], zz);
+          nrm.push(0, 0, nz);
+        }
+      }
+    }
+
+    // ---- 外边界：只出现一次的边 ----
+    const edges = new Map();
+    for (let i = 0; i < tris.length; i += 3){
+      const ring = [tris[i], tris[i+1], tris[i+2]];
+      for (let e = 0; e < 3; e++){
+        const a = ring[e], b = ring[(e+1)%3], c = ring[(e+2)%3];
+        const k = a < b ? a + "," + b : b + "," + a;
+        const rec = edges.get(k);
+        if (rec) rec.n++; else edges.set(k, { a: a, b: b, c: c, n: 1 });
+      }
+    }
+
+    const bEdges = [];
+    const byVert = new Map();
+    for (const e of edges.values()){
+      if (e.n !== 1 || e.a === e.b) continue;
+      bEdges.push(e);
+      if (!byVert.has(e.a)) byVert.set(e.a, []);
+      if (!byVert.has(e.b)) byVert.set(e.b, []);
+      byVert.get(e.a).push(e);
+      byVert.get(e.b).push(e);
+    }
+    if (!bEdges.length){
+      pos.length = base * 3;
+      nrm.length = base * 3;
+      return;
+    }
+
+    // 侧壁朝向必须整条边界统一，不能逐个三角形去反推。
+    // stripToTriangles 每段两个三角形的绕序是一正一反的，
+    // 按各自重心推外法线会在个别边上判反。所以这里沿着边界走环，
+    // 用环的有向面积定正负 —— 一条闭合有向环的 Σ(法线 × 边长) 必然严格归零。
+    const walls = [];
+    for (const startE of bEdges){
+      if (startE.done) continue;
+      const loop = [];
+      let cur = startE, from = startE.a, to = startE.b, closed = false;
+      for (;;){
+        if (cur.done) break;
+        cur.done = true;
+        cur.from = from; cur.to = to;
+        loop.push(cur);
+        if (to === startE.a){ closed = true; break; }
+        const cand = byVert.get(to);
+        let nxt = null;
+        if (cand) for (const e of cand) if (!e.done){ nxt = e; break; }
+        if (!nxt) break;
+        from = to;
+        to = (nxt.a === to) ? nxt.b : nxt.a;
+        cur = nxt;
+      }
+      if (!closed || loop.length < 3) continue;
+
+      let area = 0;
+      for (let i = 0; i < loop.length; i++){
+        const p = loop[i], q = loop[(i+1)%loop.length];
+        area += vert[p.from*2] * vert[q.from*2+1] - vert[q.from*2] * vert[p.from*2+1];
+      }
+      const s = area > 0 ? 1 : -1;   // 环走 CCW（面积>0）时 (dy,-dx) 才是外法线
+      for (const e of loop){
+        const dx = vert[e.to*2] - vert[e.from*2];
+        const dy = vert[e.to*2+1] - vert[e.from*2+1];
+        const L = Math.hypot(dx, dy) || 1;
+        walls.push({ a: e.from, b: e.to, nx: s * dy / L, ny: -s * dx / L });
+        e.walled = true;
+      }
+    }
+
+    // 走不成闭环的兜底：退回"背离所属三角形"的判定
+    for (const e of bEdges){
+      if (e.walled) continue;
+      const ax = vert[e.a*2], ay = vert[e.a*2+1];
+      const bx = vert[e.b*2], by = vert[e.b*2+1];
+      const cx = vert[e.c*2], cy = vert[e.c*2+1];
+      const dx = bx - ax, dy = by - ay;
+      const L = Math.hypot(dx, dy) || 1;
+      let nx = dy / L, ny = -dx / L;
+      const mx = (ax + bx) * 0.5, my = (ay + by) * 0.5;
+      if (nx * (mx - cx) + ny * (my - cy) < 0){ nx = -nx; ny = -ny; }
+      walls.push({ a: e.a, b: e.b, nx: nx, ny: ny });
+    }
+
+    if (!walls.length){
+      pos.length = base * 3;
+      nrm.length = base * 3;
+      return;
+    }
+
+    /* ---- 法线按顶点平均：字形是从位图描出来的，轮廓是一圈像素台阶，
+             每个台阶一面墙、法线差 90°。逐面着色就是贴着描边的一片竖棱 ——
+             看着像脏、像毛边，其实只是没做平滑着色。
+             这里把同一个顶点上所有侧壁的法线加起来归一化，台阶就化成一道连续的坡。 ---- */
+    const acc = new Map();
+    for (const w of walls){
+      let t = acc.get(w.a);
+      if (t){ t[0] += w.nx; t[1] += w.ny; } else acc.set(w.a, [w.nx, w.ny]);
+      t = acc.get(w.b);
+      if (t){ t[0] += w.nx; t[1] += w.ny; } else acc.set(w.b, [w.nx, w.ny]);
+    }
+    const nAt = (id) => {
+      const t = acc.get(id);
+      if (!t) return null;
+      const L = Math.hypot(t[0], t[1]);
+      if (!(L > 1e-9)) return null;          // 对顶相消，退化，交给原始法线
+      return [t[0] / L, t[1] / L];
+    };
+
+    for (const w of walls){
+      const na = nAt(w.a) || [w.nx, w.ny];
+      const nb = nAt(w.b) || [w.nx, w.ny];
+      const ax = vert[w.a*2], ay = vert[w.a*2+1];
+      const bx = vert[w.b*2], by = vert[w.b*2+1];
+      pos.push(ax, ay, z0, bx, by, z0, bx, by, z1,
+               ax, ay, z0, bx, by, z1, ax, ay, z1);
+      nrm.push(na[0], na[1], 0,  nb[0], nb[1], 0,  nb[0], nb[1], 0,
+               na[0], na[1], 0,  nb[0], nb[1], 0,  na[0], na[1], 0);
+    }
+  };
+
+  for (const pairs of plan.strips) emit(GRAF.stripToTriangles(pairs));
+
+  for (const pts of plan.shapes){
+    if (!pts || pts.length < 3) continue;
+    const contour = pts.map(function(p){ return new THREE.Vector2(p.x, p.y); });
+    let faces;
+    try { faces = THREE.ShapeUtils.triangulateShape(contour, []); }
+    catch (err) { continue; }                     // 退化多边形直接跳过
+    const raw = [];
+    for (const f of faces) for (const vi of f) raw.push(contour[vi].x, contour[vi].y);
+    emit(raw);
+  }
+
+  if (!pos.length) return new THREE.BufferGeometry();
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+
+function rebuildOutline(){
+  if (outlineMesh){ group.remove(outlineMesh); outlineMesh.geometry.dispose(); outlineMesh = null; }
+  if (shadowMesh){ group.remove(shadowMesh); shadowMesh.geometry.dispose(); shadowMesh = null; }
+  outlineStats = null;
+  if (!adornOn || outlineStyle === 'cone' || !lastOutlines.length || !lastGeo) { outlineText = ''; updateDiag(); return; }
+
+  outlineMaterials();
+  applyOutlineColor();
+  const plan = GRAF.planGraffiti(lastOutlines, {
+    width: GO.width,
+    coverage: Math.max(0.15, 0.96 - GO.leave * 0.50),
+    gaps: 2 + Math.round(GO.leave * 3),
+    jitter: GO.jitter, overlap: 0.030,
+    drips: GO.drips, dripLen: 0.17, dripWidth: 0.030,
+    arrows: GO.arrows, arrowLen: 0.16,
+    splats: GO.splats, splatSize: 0.020,
+    tags: GO.tags, tagWidth: 0.026, tagLen: 0.22, swash: GO.swash,
+    spikes: GO.spikes, spikeLen: 0.13,
+    hatches: GO.hatches, hatchWidth: 0.016, hatchLen: 0.13,
+    seed: GO.seed
+  });
+
+  // 外轮廓要做成和字同深度的整块板（见 planToGeo 上面那段注释）：
+  // 前盖比字面退 8‰、后盖比字背多出 10‰，摇摆时才不会相对字身滑动。
+  const bbox = lastGeo.boundingBox;
+  const z0 = (bbox ? bbox.min.z : -0.16) - 0.010;
+  const z1 = (bbox ? bbox.max.z :  0.16) - 0.008;
+  outlineMesh = new THREE.Mesh(planToGeo(plan, 0, 0, z0, z1), outlineMat);
+  outlineMesh.frustumCulled = false;
+  outlineMesh.renderOrder = -20;
+  group.add(outlineMesh);
+
+  if (GO.shadow > 0.0005){
+    // 阴影层整体后退 15‰：不和描边层抢深度，摇摆时也还露得出来
+    shadowMesh = new THREE.Mesh(planToGeo(plan, GO.shadow, -GO.shadow, z0 - 0.015, z1 - 0.015), shadowMat);
+    shadowMesh.frustumCulled = false;
+    shadowMesh.renderOrder = -21;
+    group.add(shadowMesh);
+  }
+  outlineStats = plan.stats;
+  outlineText =
+    `<br>外轮廓 <b>${plan.stats.rings}</b> 圈 · 笔画段 <b>${plan.stats.strips}</b> · 元件 <b>${plan.stats.shapes}</b>` +
+    ` · 描边最宽 <b>${plan.stats.strokeWidth.toFixed(3)}</b>`;
+  updateDiag();
+}
+
+let outlineQueued = false;
+function queueOutline(){
+  if (outlineQueued) return;
+  outlineQueued = true;
+  requestAnimationFrame(() => { outlineQueued = false; rebuildOutline(); });
+}
+
+function showAdornControls(){
+  const showCone = adornOn && outlineStyle === 'cone';
+  document.getElementById('coneOpts').style.display = showCone ? 'block' : 'none';
+  document.getElementById('outlineOpts').style.display = (adornOn && !showCone) ? 'block' : 'none';
+}
+
+function applyOutlineStyle(k){
+  const f = OUTLINE_STYLES[k];
+  if (!f) return;
+  outlineStyle = k;
+  if (k === 'cone'){
+    adorn.form = 'cone';
+  } else {
+    GO.style = k;
+    for (const key of ['width','leave','jitter','shadow','drips','arrows','splats','tags','spikes','hatches','swash'])
+      if (f[key] !== undefined) GO[key] = f[key];
+    setSlider('go1','vgo1', GO.width, 3);
+    setSlider('go2','vgo2', GO.leave, 2);
+    setSlider('go3','vgo3', GO.jitter, 2);
+    setSlider('go4','vgo4', GO.shadow, 3);
+    setSlider('go5','vgo5', GO.drips, 0);
+    setSlider('go6','vgo6', GO.arrows, 0);
+    setSlider('go7','vgo7', GO.splats, 0);
+    setSlider('go8','vgo8', GO.tags, 0);
+    setSlider('go9','vgo9', GO.spikes, 0);
+    setSlider('go10','vgo10', GO.hatches, 0);
+  }
+  document.getElementById('adornNote').textContent = f.note;
+  if (!adornOn){ adornOn = true; setSwitch('swAdorn', true); }
+  showAdornControls();
+  rebuildSpikes();
+  rebuildOutline();
 }
 
 function frameObject(factor = 1.25){
@@ -1483,8 +1722,8 @@ controls.addEventListener('start', () => { userMovedCamera = true; });
 const diag = document.getElementById('diag');
 // 诊断信息分两段拼：rebuild 产出的基础信息 + 每秒刷新的帧率。
 // 之前直接在 innerHTML 上做正则替换，会一轮轮往上叠，越叠越长。
-let diagBase = '—', fpsText = '';
-function updateDiag(){ diag.innerHTML = diagBase + (fpsText ? '<br><b>' + fpsText + '</b>' : ''); }
+let diagBase = '—', fpsText = '', outlineText = '', spikeText = '';
+function updateDiag(){ diag.innerHTML = diagBase + spikeText + outlineText + (fpsText ? '<br><b>' + fpsText + '</b>' : ''); }
 
 function rebuild(){
   const text = (document.getElementById('txt').value || '').trim() || 'SAKEE';
@@ -1526,6 +1765,7 @@ function rebuild(){
   textMesh = new THREE.Mesh(geo, [current.face, current.edge]);
   group.add(textMesh);
   rebuildSpikes();
+  rebuildOutline();
   rebuildStrands();
   applyDensity();
   if (!userMovedCamera) frameObject();
@@ -1534,7 +1774,7 @@ function rebuild(){
   diagBase =
     `轮廓 <b>${st.loops}</b> 条 · 洞 <b>${st.holes}</b> · 描边 <b>${lf.traceMs.toFixed(0)}ms</b> · ` +
     `变形 <b>${lf.styleMs.toFixed(1)}ms</b><br>三角面 <b>${(geo.attributes.position.count/3|0).toLocaleString()}</b> · ` +
-    `装饰 <b>${lastCount}</b> 根 · 每字高 <b>${paveDensity}</b> 颗钻`;
+    `每字高 <b>${paveDensity}</b> 颗钻`;
   updateDiag();
 }
 
@@ -1660,17 +1900,41 @@ Object.entries(BACKDROPS).forEach(([k, v], i) => {
   chipsBg.appendChild(b);
 });
 
-// 边缘装饰形态
+// 背景图案：原来只有"放射爆裂"一种，现在八种可切
+const BG_PATTERNS = [
+  ['burst',    '放射爆裂'],
+  ['stripes',  '斜向条纹'],
+  ['grid',     '网格'],
+  ['waves',    '同心波纹'],
+  ['halftone', '半调网点'],
+  ['fog',      '噪点云'],
+  ['scan',     '扫描线'],
+  ['clean',    '纯净渐变']
+];
+const chipsPattern = document.getElementById('chipsPattern');
+BG_PATTERNS.forEach(([k, label], i) => {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.dataset.v = k;
+  if (i === 0) b.classList.add('on');
+  b.onclick = () => {
+    [...chipsPattern.children].forEach(c => c.classList.remove('on'));
+    b.classList.add('on');
+    bgMat.uniforms.uPattern.value = i;
+  };
+  chipsPattern.appendChild(b);
+});
+
+// 边缘装饰：尖锥（原样） / 五套外轮廓风格
 const chipsForm = document.getElementById('chipsForm');
-Object.entries(ADORN_FORMS).forEach(([k, f], i) => {
+Object.entries(OUTLINE_STYLES).forEach(([k, f]) => {
   const b = document.createElement('button');
   b.textContent = f.label;
-  if (i === 0) b.classList.add('on');
+  if (k === outlineStyle) b.classList.add('on');
   b.onclick = () => {
     [...chipsForm.children].forEach(c => c.classList.remove('on'));
     b.classList.add('on');
-    adorn.form = k;
-    rebuildSpikes();
+    applyOutlineStyle(k);
   };
   chipsForm.appendChild(b);
 });
@@ -1698,7 +1962,6 @@ bind('st1','vs1', v => { strand.turns = v; rebuildStrands(); }, 0);
 bind('st2','vs2', v => { strand.radius = (STRANDS[strand.kind]?.radius || 0.03) * v; rebuildStrands(); }, 2);
 bind('st3','vs3', v => { strand.amp = v; rebuildStrands(); }, 3);
 bind('st4','vs4', v => { strand.depth = v; rebuildStrands(); }, 3);
-wireSwitch('swLeaves', true, on => { strand.leaves = on; rebuildStrands(); });
 
 // 强调色
 const accentPick = document.getElementById('accentPick'), accentHex = document.getElementById('accentHex');
@@ -1716,6 +1979,7 @@ function commitAccent(hex){
   if (!n) return;
   bgMat.uniforms.uAccent.value.set(n);
   setColorInputs(n);
+  if (GO.accent) applyOutlineColor();      // 描边跟着强调色一起变
 }
 accentPick.addEventListener('input', () => commitAccent(accentPick.value));
 accentHex.addEventListener('change', () => commitAccent(accentHex.value));
@@ -1787,6 +2051,8 @@ stageWrap.addEventListener('drop', e => {
 bind('i1','vi1', v => { imgMat.uniforms.uDim.value = v; }, 2);
 bind('i2','vi2', v => { imgMat.uniforms.uVig.value = v; }, 2);
 bind('i3','vi3', v => { imgMat.uniforms.uZoom.value = v; }, 2);
+bind('i4','vi4', v => { imgMat.uniforms.uPan.value.x = v; }, 3);
+bind('i5','vi5', v => { imgMat.uniforms.uPan.value.y = v; }, 3);
 
 /* ---------- 元素开关 ---------- */
 let ringsOn = true, lastRingGain = 0.40;
@@ -1822,7 +2088,7 @@ wireSwitch('swSpin', false, on => {
   const b = document.getElementById('btnSpin'); if (b) b.classList.toggle('on', on);
 });
 // 边缘装饰总开关：关掉时不再重建装饰网格
-wireSwitch('swAdorn', true, on => { adornOn = on; rebuildSpikes(); });
+wireSwitch('swAdorn', true, on => { adornOn = on; showAdornControls(); rebuildSpikes(); rebuildOutline(); });
 // 背景层总开关：程序化背景和图片背景共用它
 wireSwitch('swBg', true, on => { bgLayerOn = on; applyBgVisibility(); });
 // 辉光开关（等价于把强度拉到 0，但一键更快）
@@ -1851,6 +2117,24 @@ bind('a3','va3', v => { adorn.lean = v; rebuildSpikes(); }, 2);
 bind('b1','vb1', v => { bgMat.uniforms.uRayGain.value = v; }, 2);
 bind('b2','vb2', v => { lastRingGain = v; if (ringsOn) bgMat.uniforms.uRingGain.value = v; }, 2);
 bind('b3','vb3', v => { bgMat.uniforms.uDotGain.value = v; }, 2);
+bind('b4','vb4', v => { bgMat.uniforms.uDensity.value = v; }, 2);
+
+// 字在画面里的位置（id 别再用 g1/g2 —— 那两个被「字形微调·加粗/尖角」占了）
+bind('px','vpx', v => { grpPos.x = v; }, 2);
+bind('py','vpy', v => { grpPos.y = v; }, 2);
+
+// 外轮廓微调（都只重算外轮廓，不重建字形几何）
+bind('go1','vgo1', v => { GO.width  = v; queueOutline(); }, 3);
+bind('go2','vgo2', v => { GO.leave  = v; queueOutline(); }, 2);
+bind('go3','vgo3', v => { GO.jitter = v; queueOutline(); }, 2);
+bind('go4','vgo4', v => { GO.shadow = v; queueOutline(); }, 3);
+bind('go5','vgo5', v => { GO.drips  = v; queueOutline(); }, 0);
+bind('go6','vgo6', v => { GO.arrows = v; queueOutline(); }, 0);
+bind('go7','vgo7', v => { GO.splats = v; queueOutline(); }, 0);
+bind('go8','vgo8', v => { GO.tags   = v; queueOutline(); }, 0);
+bind('go9','vgo9', v => { GO.spikes = v; queueOutline(); }, 0);
+bind('go10','vgo10', v => { GO.hatches = v; queueOutline(); }, 0);
+wireSwitch('swGoAccent', false, on => { GO.accent = on; applyOutlineColor(); });
 
 document.getElementById('pattern').addEventListener('change', e => { adorn.pattern = e.target.value; rebuildSpikes(); });
 document.getElementById('sides').addEventListener('change', e => { adorn.sides = e.target.value; rebuildSpikes(); });
@@ -2001,6 +2285,7 @@ sizeToStage();
 applyBackdrop('blood');
 applyMaterial('pave');
 rebuild();
+applyOutlineStyle(outlineStyle);   // 让默认风格的说明、可见性与几何都落到初始状态
 
 /* ============================ 渲染循环 ============================ */
 let last = performance.now()/1000, fCount = 0, fStart = performance.now();
@@ -2018,13 +2303,15 @@ function animate(){
   if (objSway){
     group.rotation.y = Math.sin(phase * TAU) * 0.34;
     group.rotation.x = Math.sin(phase * TAU * 2) * 0.065 + 0.015;
-    group.position.y = Math.sin(phase * TAU * 3) * 0.05;
+    group.position.y = grpPos.y + Math.sin(phase * TAU * 3) * 0.05;
     group.scale.setScalar((group.userData.baseScale || 1) * (1 + Math.sin(phase * TAU * 4) * 0.007));
   } else {
     group.rotation.set(0, 0, 0);
-    group.position.y = 0;
+    group.position.y = grpPos.y;
     group.scale.setScalar(group.userData.baseScale || 1);
   }
+  // 位置是叠加在摆动之上的：原来这里直接写 0，摆动一关就把用户挪好的位置抹平了
+  group.position.x = grpPos.x;
 
   bgMat.uniforms.uPhase.value = phase;
   camera.getWorldDirection(camDir);
