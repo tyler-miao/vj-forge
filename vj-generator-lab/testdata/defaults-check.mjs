@@ -1,4 +1,4 @@
-﻿import fs from "node:fs"; import path from "node:path"; import { fileURLToPath } from "node:url";
+import fs from "node:fs"; import path from "node:path"; import { fileURLToPath } from "node:url";
 import { traceContours } from "../src/trace-contours.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const index = JSON.parse(fs.readFileSync(path.join(HERE,"index.json"),"utf8"));

@@ -1,4 +1,4 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import { traceContours } from "../src/trace-contours.js";
 const index = JSON.parse(fs.readFileSync("index.json","utf8"));
 const c = index.find(x=>x.name==="case02");

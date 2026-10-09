@@ -1,10 +1,21 @@
-﻿node_modules/
+# ── 依赖与缓存 ────────────────────────────────────────
+node_modules/
 .npm-cache/
+
+# ── 预览服务的扁平内容目录（由脚本从 src/ 与 prototype/ 复制生成，不是源码）──
 .superpowers/
+
+# ── 构建产物 ──────────────────────────────────────────
 dist/
 *.log
 
-# 字体二进制由 fetch-fonts.mjs 重新下载，不入库
+# ── 字体二进制不入库（约 3MB），用 fonts/fetch-fonts.mjs 重新下载 ──
 *.ttf
 *.otf
 
+# ── 系统 / 编辑器垃圾 ────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/

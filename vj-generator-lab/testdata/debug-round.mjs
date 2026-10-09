@@ -1,4 +1,4 @@
-﻿import { roundCorners, simplifyRing, ringPerimeter, ringArea } from "../src/stylize-contours.js";
+import { roundCorners, simplifyRing, ringPerimeter, ringArea } from "../src/stylize-contours.js";
 
 // 理想正方形（逆时针）
 const sq = [{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}];

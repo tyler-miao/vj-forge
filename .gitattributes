@@ -1,0 +1,17 @@
+# 统一：入库按 LF，检出也按 LF。
+# 没有这个文件时，行尾完全取决于每个人本机的 core.autocrlf ——
+# Windows 上检出 CRLF、Linux 上检出 LF，来回一改就是满屏的「只是换了行尾」的假 diff。
+* text=auto eol=lf
+
+# ── 二进制：明确声明，别让 git 靠「有没有 NUL 字节」去猜 ──
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.bin    binary
+*.ttf    binary
+*.otf    binary
+*.woff   binary
+*.woff2  binary
+*.zip    binary

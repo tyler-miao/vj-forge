@@ -1,4 +1,4 @@
-﻿import fs from "node:fs"; import path from "node:path";
+import fs from "node:fs"; import path from "node:path";
 import { traceContours } from "../src/trace-contours.js";
 import { simplifyRing } from "../src/stylize-contours.js";
 const index = JSON.parse(fs.readFileSync("index.json","utf8"));
