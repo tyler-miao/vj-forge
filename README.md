@@ -70,6 +70,7 @@ vj-forge/
 │   ├── serve.mjs                本地预览服务器
 │   └── README.md                引擎层的详细说明（含每个判据的数学依据）
 ├── docs/superpowers/specs/      设计文档
+├── LICENSE                      MIT
 └── README.md
 ```
 
@@ -112,6 +113,12 @@ npm test
 用它们渲染出的 logo、海报、演出视频等成品**不受任何限制**；
 被禁止的只有「单独转售字体文件」和「改造字体后不沿用原协议」两件事。
 字体二进制不入库，可用 `node fonts/fetch-fonts.mjs` 重新下载。
+
+## 许可证
+
+[MIT](LICENSE) —— 拿去做什么都可以，保留版权声明即可。
+
+> 字体是另一回事：它们来自 Google Fonts，协议是 SIL OFL 1.1 / Apache 2.0，见上一节。
 
 ## 更多
 
