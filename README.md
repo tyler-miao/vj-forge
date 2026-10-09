@@ -27,7 +27,9 @@ npm install          # 只有 three@0.160 一个开发依赖，测试脚本要�
 npm run serve        # → http://localhost:5390
 ```
 
-浏览器打开 <http://localhost:5390/> 即可。```bash
+浏览器打开 <http://localhost:5390/> 即可。
+
+```bash
 PORT=8080 npm run serve        # 换端口（默认 5390 被占时会直接提示你）
 HOST=0.0.0.0 npm run serve     # 开放给局域网，用别的设备 / 手机 / 投屏盒子访问
 ```

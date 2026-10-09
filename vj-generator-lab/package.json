@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "serve": "node serve.mjs",
-    "test": "node testdata/verify.mjs && node testdata/verify-style.mjs && node testdata/verify-adorn-forms.mjs && node testdata/verify-graffiti.mjs && node testdata/scale-check.mjs && node testdata/defaults-check.mjs"
+    "test": "node testdata/verify.mjs && node testdata/verify-style.mjs && node testdata/verify-adorn-forms.mjs && node testdata/verify-graffiti.mjs && node testdata/scale-check.mjs && node testdata/defaults-check.mjs && node testdata/repo-check.mjs"
   },
   "devDependencies": {
     "three": "^0.160.0"
