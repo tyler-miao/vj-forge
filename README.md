@@ -27,7 +27,13 @@ npm install          # 只有 three@0.160 一个开发依赖，测试脚本要�
 npm run serve        # → http://localhost:5390
 ```
 
-浏览器打开 <http://localhost:5390/> 即可。换端口：`PORT=8080 npm run serve`
+浏览器打开 <http://localhost:5390/> 即可。```bash
+PORT=8080 npm run serve        # 换端口（默认 5390 被占时会直接提示你）
+HOST=0.0.0.0 npm run serve     # 开放给局域网，用别的设备 / 手机 / 投屏盒子访问
+```
+
+默认只监听 `127.0.0.1`（只有本机能开）。要现场演出用别的设备拉这个页面，必须加 `HOST=0.0.0.0`，
+脚本会把检测到的局域网地址打印出来。
 
 > **为什么不能直接双击 `prototype/latest.html`**：它里面的模块路径是写死的绝对路径
 > （`/files/trace-contours.js` … `/files/fonts.json`），`file://` 协议下这些路径不存在，
